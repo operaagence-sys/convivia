@@ -14,8 +14,8 @@
 | # | Tranche | État | Conventions | Tests | Sécurité | Commit | Problèmes ouverts |
 |---|---|---|---|---|---|---|---|
 | — | Documents 01 à 09 | ✅ | ✅ | — | — | ⬜ (pas encore de dépôt git) | Questions de 09 § 22 (voir 08 § 5) |
-| 0 | Outillage : hooks, git | 🟡 | ✅ | ✅ 161/161 (relance `qa-tester` sautée) | 🟡 E1–E7 corrigées, réaudit en fin de tranche 1 | ⬜ | Premier commit sur demande |
-| 1 | Socle technique | 🟡 | ⬜ | ⬜ | ⬜ | ⬜ | — |
+| 0 | Outillage : hooks, git | ✅ | ✅ | ✅ 161/161 (relance `qa-tester` sautée) | ✅ réaudit fin de tranche 1 : E2, E3, E6 corrigées ; E1, E4, E5, E7 partielles (Moyennes acceptées) | ✅ `995b70e` | Limites connues (§ 4) |
+| 1 | Socle technique | 🟡 | ✅ | ✅ Vitest 175/175, Playwright 11/11 | ✅ 0 Critique / Élevée | ✅ `995b70e` | Critère de fin : CI + preview après le premier push |
 | 2 | Connexion organisateur et compte | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
 | 3 | Événements | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
 | 4 | Invités et plafond | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
@@ -329,7 +329,15 @@ staging, Vercel en lecture seule, 12 paquets ajoutés).
   porteur, redémarrage, commit) — **remplacée ensuite** : **M8 seul, puis
   commit**. Les hooks ne sont plus modifiés (pas de re-scellement) ; M1–M7
   et F7, F8 deviennent des limites connues (§ 4) ; pas de nouvel audit
-  complet. `'unsafe-inline'` **accepté jusqu'à la
+  complet. → `devops-engineer` ✅ M8 : liste blanche des 6 `NEXT_PUBLIC_*`,
+  valeurs contrôlées (JWT `service_role`, `sb_secret_`, `sk_*`), contrôle
+  au build dans `next.config.ts` ; `sk_live_` sans test dédié (hook).
+  Vérifié par le pilote : format, lint, types, Vitest **175/175**, build,
+  traceurs OK. **Premier commit `995b70e`** sur `main` (aucun push),
+  scellement des hooks intact. 16 fichiers en CRLF dans la copie de
+  travail (`.gitattributes` impose LF) : un checkout les réécrira et
+  cassera le scellement → re-scellement par le porteur à ce moment-là.
+  `'unsafe-inline'` **accepté jusqu'à la
   tranche 5** (nonces + origine Supabase exacte, ajouté au 08) ;
   robots.txt : **garder `Disallow: /i/` et `noindex`** (TRD § 4 inchangé,
   F3 accepté). Ordre : `devops-engineer` M8 (application) lancé, puis

@@ -198,11 +198,21 @@ export function looksLikeSecretValue(rawValue: string): boolean {
   return false;
 }
 
+/**
+ * Préfixe des variables système que Vercel injecte au build (« Automatically expose System
+ * Environment Variables »: NEXT_PUBLIC_VERCEL_ENV, _URL, _GIT_*, etc.). Non secrètes, acceptées
+ * en plus de la liste blanche; le contrôle des VALEURS s'applique quand même.
+ */
+export const PUBLIC_VERCEL_SYSTEM_PREFIX = 'NEXT_PUBLIC_VERCEL_';
+
 /** Noms (jamais les valeurs) des variables `NEXT_PUBLIC_*` hors liste blanche. */
 export function findSecretPublicVariables(env: Record<string, string | undefined>): string[] {
   const allowed: readonly string[] = PUBLIC_ENV_ALLOWLIST;
   return Object.keys(env).filter(
-    (name) => name.startsWith('NEXT_PUBLIC_') && !allowed.includes(name),
+    (name) =>
+      name.startsWith('NEXT_PUBLIC_') &&
+      !allowed.includes(name) &&
+      !name.startsWith(PUBLIC_VERCEL_SYSTEM_PREFIX),
   );
 }
 

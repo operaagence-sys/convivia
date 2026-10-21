@@ -209,6 +209,30 @@ describe('variables NEXT_PUBLIC_ secrètes', () => {
     expect(looksLikeSecretValue(fakeJwt('authenticated'))).toBe(false);
   });
 
+  it('accepte les variables système Vercel NEXT_PUBLIC_VERCEL_*', () => {
+    const env = {
+      ...allowed,
+      NEXT_PUBLIC_VERCEL_URL: 'convivia-abc.vercel.app',
+      NEXT_PUBLIC_VERCEL_ENV: 'preview',
+      NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA: 'abc123',
+    };
+    expect(findSecretPublicVariables(env)).toEqual([]);
+    expect(() => assertNoSecretPublicVariables(env)).not.toThrow();
+  });
+
+  it('contrôle quand même la valeur des NEXT_PUBLIC_VERCEL_*', () => {
+    const jwt = fakeJwt('service_role');
+    const env = { ...allowed, NEXT_PUBLIC_VERCEL_X: jwt };
+    expect(findSecretPublicValues(env)).toEqual(['NEXT_PUBLIC_VERCEL_X']);
+    expect(() => assertNoSecretPublicVariables(env)).toThrow(/NEXT_PUBLIC_VERCEL_X/);
+  });
+
+  it('refuse NEXT_PUBLIC_VERCELX (sans tiret bas)', () => {
+    const env = { ...allowed, NEXT_PUBLIC_VERCELX: 'x' };
+    expect(findSecretPublicVariables(env)).toEqual(['NEXT_PUBLIC_VERCELX']);
+    expect(() => assertNoSecretPublicVariables(env)).toThrow(EnvGuardError);
+  });
+
   it('ne contrôle pas les variables serveur (pas de préfixe NEXT_PUBLIC_)', () => {
     expect(() =>
       assertNoSecretPublicVariables({ ...allowed, [serviceRole]: fakeJwt('service_role') }),
