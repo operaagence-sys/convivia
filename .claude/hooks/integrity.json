@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "algorithm": "sha256",
+  "files": {
+    "settings.json": "300fa61b882558f89f38cc9ada749b8ffb1ec29d69fd0327e2ce048c541dc298",
+    "hooks/agent-stop-review.mjs": "d53680e8d5701b35a8c8bc1b80bb4f37e1ef99f8a125404c1cb1b56768dd059e",
+    "hooks/allowed-packages.json": "9dca71707e3ef22b58ddb8c21bda9d97d5be60e4076c06939b9b41ea33af00a5",
+    "hooks/format-and-check.mjs": "6686ab095278de80493b834a146d9ca79b529e01fc1ebc374edce840e39d87f1",
+    "hooks/guard-live-keys.mjs": "6552dc6b59161f77a245913eac0d5a8a3b0a67de589cec8eafcf07c0e1586622",
+    "hooks/guard-shell.mjs": "e9e0bb7d018988e1a30f2d0dcd6b99091e4298e6fd522dcb53933e3a594cc36f",
+    "hooks/guard-supabase.mjs": "cdf31f4fa4c290113997ae1f1a4f6370ca5c28ed4351fbfd56bde96caa0a411a",
+    "hooks/guard-vercel.mjs": "d7711804a99c605608cc4d58647c5ef9850eb40f41d6cefd4b0b3471e9f17a6d",
+    "hooks/guest-privacy.mjs": "dcc00e6d213cdb6807f5c5796ac6bebe19f7aa8a44eb851522a8e133af98c202",
+    "hooks/irreversible-actions.mjs": "84bd8cdcfc81cc570323f033b54a61129a3053f5480928f720533dc571dad953",
+    "hooks/migration-immutable.mjs": "f54eeacc873d69c6ef9a741ae3eb6161ce20dec0c02f8f618740d0fa3ba85c53",
+    "hooks/pre-commit-guard.mjs": "b2e30517039ecec965541b5d13915b37e53abd4f11824cc1e035fbdbc6ce0821",
+    "hooks/protect-guardrails.mjs": "786a38770196346c9b82f107c4ce8c6a8cabf79d20a344734f8d17b7cb60eab9",
+    "hooks/protect-secrets.mjs": "9761ca0908f8c6f98edb7cf76cedf681364725e8f39a8d7f8bbe1c1b4cabca71",
+    "hooks/quick-tests.mjs": "ddd70dd2bc3c317b848fecfb020ac2b891210801831b99767b46ee5abf2a71cd",
+    "hooks/rls-check.mjs": "10ecdfd61d7de23a6199f65439f56897721d6ec58d00f6cdfe433eae9c69a4fd",
+    "hooks/run-hook.mjs": "b505980365cb585634b6ff18c7df074dad0d7b536dd23055917359df4442f88a",
+    "hooks/seal.mjs": "f24b383d471b2d6eec1ab326ac9b7a32a784b4c6c399128a483ab426a4dae8a9",
+    "hooks/lib/common.mjs": "3d9f9ff786a2408b6e9e07d81a3fc90152affa99eed065bec326a4f466acadbe",
+    "hooks/lib/gitscan.mjs": "093931e95bf3472ca3d3d3688ba871550b6e12f8c2945825e175bd63834b94a6",
+    "hooks/lib/integrity.mjs": "34bee2e6822ec98ac2ea87b6429c2b1e417da38763b2469e28f88c03a963bae3",
+    "hooks/lib/shell.mjs": "9ce043abd04a0b9ff2d9a2428b6d2d70d27b1b19566841e679ddebc3fe8d5945"
+  }
+}

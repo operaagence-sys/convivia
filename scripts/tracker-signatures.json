@@ -1,0 +1,36 @@
+{
+  "_comment": "Signatures de traceurs a ne jamais trouver dans ce que le navigateur charge pour /i/* (CLAUDE.md 5, TRD 12.2, D18). Donnees (et non code) pour que le controle puisse nommer ces outils sans que le hook guest-privacy ne les prenne pour un usage. Motifs volontairement larges: un faux positif se corrige en retirant l'import fautif de /i/*, pas en affaiblissant ce fichier.",
+  "signatures": [
+    { "name": "PostHog", "pattern": "posthog" },
+    {
+      "name": "Vercel Analytics",
+      "pattern": "@vercel/analytics|_vercel/insights|va\\.vercel-scripts"
+    },
+    {
+      "name": "Vercel Speed Insights",
+      "pattern": "@vercel/speed-insights|_vercel/speed-insights"
+    },
+    {
+      "name": "Google Analytics / Tag Manager",
+      "pattern": "googletagmanager\\.com|google-analytics\\.com|\\bgtag\\s*\\(|\\bga\\s*\\(\\s*['\"]create['\"]"
+    },
+    {
+      "name": "Pixel Meta",
+      "pattern": "connect\\.facebook\\.net|facebook\\.com/tr\\b|\\bfbq\\s*\\(|fbevents\\.js"
+    },
+    { "name": "Hotjar", "pattern": "hotjar" },
+    { "name": "Microsoft Clarity", "pattern": "clarity\\.ms|\\bclarity\\s*\\(\\s*['\"]" },
+    {
+      "name": "Sentry (navigateur)",
+      "pattern": "@sentry/(browser|react|nextjs)|sentry-cdn|\\.ingest\\.[a-z.]*sentry\\.io|__SENTRY__"
+    },
+    {
+      "name": "Session Replay",
+      "pattern": "replayIntegration|rrweb|sessionReplay|session-replay"
+    },
+    {
+      "name": "Autres traceurs",
+      "pattern": "mixpanel|amplitude\\.com|segment\\.(com|io)|fullstory|plausible\\.io|matomo|heap-?analytics|logrocket"
+    }
+  ]
+}

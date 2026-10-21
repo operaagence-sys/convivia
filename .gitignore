@@ -1,0 +1,32 @@
+# Secrets: never versioned (only the example with empty values)
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+.vercel/
+
+# Supabase CLI local state
+supabase/.branches/
+supabase/.temp/
+
+# Local Claude Code settings
+.claude/settings.local.json
+
+# OS files and logs
+Thumbs.db
+.DS_Store
+*.log
+
+# TypeScript / Next.js generated
+*.tsbuildinfo
+next-env.d.ts
+
+# Lighthouse CI output
+.lighthouseci/

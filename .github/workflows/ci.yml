@@ -1,0 +1,148 @@
+name: CI
+
+# Aucun secret requis (sauf GITLEAKS_LICENSE pour le job secrets): le build, les tests et les controles s'executent avec des
+# valeurs absentes ou fictives. WhatsApp reste en `simulate`, FedaPay en sandbox par defaut
+# (garde-fous dans src/lib/env/guards.ts).
+
+on:
+  push:
+    branches: [main, production]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+jobs:
+  quality:
+    name: Lint, types, tests unitaires
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+      - run: npm test
+
+  build:
+    name: Build et controle des traceurs sur /i/*
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Aucun traceur dans le bundle de /i/*
+        run: npm run check:trackers
+
+  lighthouse:
+    name: Lighthouse CI (4G lente, budget < 1 Mo, LCP < 2,5 s)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run lhci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-report
+          path: .lighthouseci
+          if-no-files-found: ignore
+
+  e2e:
+    name: Playwright (profil mobile)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
+
+  database:
+    name: Base de donnees (migrations + pgTAP)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      # Base ephemere dans le runner (Docker y est disponible). Aucun projet distant.
+      - name: Demarrer Supabase local (services inutiles exclus)
+        run: supabase start -x studio,imgproxy,mailpit,postgres-meta,edge-runtime,logflare,vector,supavisor
+      - name: Rejouer toutes les migrations
+        run: supabase db reset
+      - name: Tests pgTAP
+        run: |
+          if ls supabase/tests/database/*.sql >/dev/null 2>&1; then
+            supabase test db
+          else
+            echo "Aucun test pgTAP pour l'instant (supabase/tests/database/)."
+          fi
+
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: 'Dependances de production (bloquant, haute ou critique)'
+        run: npm audit --omit=dev --audit-level=high
+      - name: 'Toutes les dependances (information, non bloquant)'
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  secrets:
+    name: Detection de secrets (code et historique)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Depot d'organisation: l'action officielle exige une cle de licence gratuite
+          # (secret GITLEAKS_LICENSE). A creer par le porteur du projet, voir README.
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}

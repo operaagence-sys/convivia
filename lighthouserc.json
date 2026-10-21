@@ -1,0 +1,50 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npm run start -- -p 3200",
+      "startServerReadyPattern": "Ready",
+      "startServerReadyTimeout": 60000,
+      "url": ["http://localhost:3200/i/LighthouseTestToken000"],
+      "numberOfRuns": 3,
+      "settings": {
+        "formFactor": "mobile",
+        "screenEmulation": {
+          "mobile": true,
+          "width": 412,
+          "height": 823,
+          "deviceScaleFactor": 1.75,
+          "disabled": false
+        },
+        "throttlingMethod": "simulate",
+        "throttling": {
+          "rttMs": 150,
+          "throughputKbps": 1638.4,
+          "requestLatencyMs": 562.5,
+          "downloadThroughputKbps": 1474.56,
+          "uploadThroughputKbps": 675,
+          "cpuSlowdownMultiplier": 4
+        },
+        "onlyCategories": ["performance"],
+        "chromeFlags": "--no-sandbox --headless=new"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "largest-contentful-paint": [
+          "error",
+          { "maxNumericValue": 2500, "aggregationMethod": "median" }
+        ],
+        "total-byte-weight": [
+          "error",
+          { "maxNumericValue": 1048576, "aggregationMethod": "median" }
+        ],
+        "resource-summary:third-party:count": ["error", { "maxNumericValue": 0 }],
+        "resource-summary:script:size": ["warn", { "maxNumericValue": 204800 }]
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci"
+    }
+  }
+}

@@ -1,0 +1,131 @@
+/*
+ * Design tokens de l'application (docs/04-design-system.md). Source unique: tout composant
+ * lit ces variables (classes Tailwind générées par @theme ou var(--...)), jamais une valeur
+ * en dur. Ne concerne pas les templates d'invitation (05).
+ */
+
+@theme {
+  /* Police (branchée par next/font dans le layout racine) */
+  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  /* 04 § 2.1 Accent */
+  --color-accent-100: #e0e7ff;
+  --color-accent-500: #6366f1;
+  --color-accent-600: #4f46e5;
+  --color-accent-700: #4338ca;
+
+  /* 04 § 2.2 Neutres */
+  --color-page: #f7f7f9;
+  --color-surface: #ffffff;
+  --color-border-subtle: #e5e5ea;
+  --color-text-primary: #17171c;
+  --color-text-secondary: #6b6b76;
+  --color-text-disabled: #afafba;
+
+  /* 04 § 7 Champs remplis */
+  --color-field: #f2f2f5;
+  --color-field-error: #fef2f2;
+  --color-field-disabled: #f7f7f9;
+
+  /* 04 § 2.3 Sémantiques et leurs fonds pastel */
+  --color-success: #16a34a;
+  --color-success-soft: #dcfce7;
+  --color-error: #dc2626;
+  --color-error-soft: #fee2e2;
+  --color-warning: #d97706;
+  --color-warning-soft: #fef3c7;
+  --color-info: #2563eb;
+  --color-info-soft: #dbeafe;
+
+  /*
+   * PROPOSITION (hors 04, à valider): variantes foncées des 4 sémantiques pour le TEXTE posé
+   * sur fond pastel. Les teintes du 04 sur leur pastel donnent un contraste < 4,5:1
+   * (success ~2,9; warning ~2,8), insuffisant en lecture extérieure.
+   */
+  --color-success-ink: #166534;
+  --color-error-ink: #991b1b;
+  --color-warning-ink: #92400e;
+  --color-info-ink: #1e40af;
+
+  /* 04 § 3 Échelle typographique (taille / interligne / graisse) */
+  --text-h1: 1.75rem; /* 28 */
+  --text-h1--line-height: 2.25rem; /* 36 */
+  --text-h1--font-weight: 700;
+  --text-h1-admin: 2rem; /* 32, en-tête de tableau de bord admin */
+  --text-h1-admin--line-height: 2.5rem;
+  --text-h1-admin--font-weight: 700;
+  --text-h2: 1.375rem; /* 22 */
+  --text-h2--line-height: 1.75rem; /* 28 */
+  --text-h2--font-weight: 700;
+  --text-h3: 1.125rem; /* 18 */
+  --text-h3--line-height: 1.5rem; /* 24 */
+  --text-h3--font-weight: 600;
+  --text-body: 1rem; /* 16 */
+  --text-body--line-height: 1.5rem; /* 24 */
+  --text-body--font-weight: 400;
+  --text-small: 0.875rem; /* 14 */
+  --text-small--line-height: 1.25rem; /* 20 */
+  --text-small--font-weight: 400;
+  --text-caption: 0.75rem; /* 12 */
+  --text-caption--line-height: 1rem; /* 16 */
+  --text-caption--font-weight: 500;
+
+  /* 04 § 4 Espacement: base 4 px (4 8 12 16 24 32 48 64 = 1 2 3 4 6 8 12 16) */
+  --spacing: 0.25rem;
+
+  /*
+   * 04 § 5 Arrondis. Choix dans les fourchettes: radius-md = 12 px (10-12),
+   * radius-lg = 16 px (14-16).
+   */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+}
+
+/* Hauteurs de contrôle (04 § 6). Choix dans la fourchette admin: 40 px (36-40). */
+:root {
+  --control-height: 2.75rem; /* 44 px mobile: zone tactile */
+  --control-height-admin: 2.5rem; /* 40 px admin desktop */
+  --status-bar-width: 4px; /* liseré de statut des cartes (3-4) */
+}
+
+html {
+  background-color: var(--color-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
+
+/* Focus visible partout (clavier). Anneau plein accent: l'anneau accent-100 seul du 04 est trop pâle. */
+:where(
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  summary,
+  [role='tab'],
+  [role='switch'],
+  [tabindex]
+):focus-visible {
+  outline: 2px solid var(--color-accent-600);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "agent": "pilot",
+  "permissions": {
+    "disableBypassPermissionsMode": "disable",
+    "allow": [
+      "mcp__claude_ai_Supabase__execute_sql"
+    ],
+    "deny": [
+      "PowerShell",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.development)",
+      "Read(**/.env.development.local)",
+      "Read(**/.env.test)",
+      "Read(**/.env.test.local)",
+      "Read(**/.env.staging)",
+      "Read(**/.env.preview)",
+      "Read(**/.env.production)",
+      "Read(**/.env.production.local)",
+      "Edit(**/.env)",
+      "Edit(**/.env.local)",
+      "Edit(**/.env.development)",
+      "Edit(**/.env.development.local)",
+      "Edit(**/.env.test)",
+      "Edit(**/.env.test.local)",
+      "Edit(**/.env.staging)",
+      "Edit(**/.env.preview)",
+      "Edit(**/.env.production)",
+      "Edit(**/.env.production.local)",
+      "Write(**/.env)",
+      "Write(**/.env.local)",
+      "Write(**/.env.development)",
+      "Write(**/.env.development.local)",
+      "Write(**/.env.test)",
+      "Write(**/.env.test.local)",
+      "Write(**/.env.staging)",
+      "Write(**/.env.preview)",
+      "Write(**/.env.production)",
+      "Write(**/.env.production.local)",
+      "mcp__supabase__deploy_edge_function",
+      "mcp__supabase__create_project",
+      "mcp__supabase__create_branch",
+      "mcp__supabase__delete_branch",
+      "mcp__supabase__merge_branch",
+      "mcp__supabase__reset_branch",
+      "mcp__supabase__rebase_branch",
+      "mcp__supabase__pause_project",
+      "mcp__supabase__restore_project",
+      "mcp__claude_ai_Supabase__deploy_edge_function",
+      "mcp__claude_ai_Supabase__create_project",
+      "mcp__claude_ai_Supabase__create_branch",
+      "mcp__claude_ai_Supabase__delete_branch",
+      "mcp__claude_ai_Supabase__merge_branch",
+      "mcp__claude_ai_Supabase__reset_branch",
+      "mcp__claude_ai_Supabase__rebase_branch",
+      "mcp__claude_ai_Supabase__pause_project",
+      "mcp__claude_ai_Supabase__restore_project",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__supabase__apply_migration"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell|Monitor|Grep",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "protect-secrets", "--event=PreToolUse", "--budget=8000"], "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell|Monitor",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "guard-shell", "--event=PreToolUse", "--budget=8000"], "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell|Monitor|mcp__.*[Ss]upabase.*",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "guard-supabase", "--event=PreToolUse", "--budget=8000"], "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "mcp__.*[Vv]ercel.*",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "guard-vercel", "--event=PreToolUse", "--budget=8000"], "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell|Monitor",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "guard-live-keys", "--event=PreToolUse", "--budget=8000"], "timeout": 10 },
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "pre-commit-guard", "--event=PreToolUse", "--budget=50000"], "timeout": 60 },
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "irreversible-actions", "--event=PreToolUse", "--budget=8000"], "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell|Monitor",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "protect-guardrails", "--event=PreToolUse", "--budget=8000"], "timeout": 10 }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "migration-immutable", "--event=PreToolUse", "--budget=8000"], "timeout": 10 },
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "guest-privacy", "--event=PreToolUse", "--budget=8000"], "timeout": 10 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "format-and-check", "--event=PostToolUse", "--budget=50000", "--fail=open"], "timeout": 60 },
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "rls-check", "--event=PostToolUse", "--budget=8000"], "timeout": 10 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "quick-tests", "--event=Stop", "--budget=150000", "--fail=open"], "timeout": 180 }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "agent-stop-review", "--event=SubagentStop", "--budget=50000", "--fail=open"], "timeout": 60 },
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/run-hook.mjs", "quick-tests", "--event=SubagentStop", "--budget=150000", "--fail=open"], "timeout": 180 }
+        ]
+      }
+    ]
+  }
+}
