@@ -107,6 +107,14 @@ export const PRODUCTION_REQUIRED_ENV = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
+  // Tranche 2 (connexion): compteur des codes faux, lu par la route de vérification.
+  'LOGIN_ATTEMPTS_HASH_SECRET',
+  'LOGIN_IP_HASH_SECRET',
+  // Transfert de l'IP du visiteur à Supabase Auth (clé secrète `sb_secret_…`).
+  'SUPABASE_SECRET_KEY',
+  // Tranche 2 (connexion): le serveur fabrique, hache et envoie le code.
+  'LOGIN_CODE_PEPPER',
+  'RESEND_API_KEY',
 ] as const;
 
 /**
@@ -147,6 +155,32 @@ export function assertProductionRequiredEnv(
     throw new EnvGuardError(
       `Variable(s) d'environnement manquante(s) en production: ${missing.join(', ')}.`,
     );
+  }
+}
+
+/** Secrets de la connexion par code: trois valeurs différentes (séparation des usages). */
+export const LOGIN_SECRET_NAMES = [
+  'LOGIN_CODE_PEPPER',
+  'LOGIN_ATTEMPTS_HASH_SECRET',
+  'LOGIN_IP_HASH_SECRET',
+] as const;
+
+/**
+ * Lève si deux secrets de connexion posés ont la même valeur (toute environnement). Le message
+ * ne contient que des noms de variables, jamais de valeur. Une variable absente est ignorée.
+ */
+export function assertDistinctLoginSecrets(env: Record<string, string | undefined>): void {
+  const seen = new Map<string, string>();
+  for (const name of LOGIN_SECRET_NAMES) {
+    const value = env[name];
+    if (!value) continue;
+    const other = seen.get(value);
+    if (other) {
+      throw new EnvGuardError(
+        `Secrets de connexion identiques refusés: ${other} et ${name} doivent avoir des valeurs différentes.`,
+      );
+    }
+    seen.set(value, name);
   }
 }
 

@@ -24,6 +24,11 @@ describe('/design-system', () => {
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.test');
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-fake');
     vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service-fake');
+    vi.stubEnv('LOGIN_ATTEMPTS_HASH_SECRET', 'a'.repeat(32));
+    vi.stubEnv('LOGIN_IP_HASH_SECRET', 'b'.repeat(32));
+    vi.stubEnv('SUPABASE_SECRET_KEY', 'sb_secret_fake');
+    vi.stubEnv('LOGIN_CODE_PEPPER', 'c'.repeat(32));
+    vi.stubEnv('RESEND_API_KEY', 're_fake');
     await expect(callPage()).rejects.toThrow('NEXT_NOT_FOUND');
     resetServerEnvCache();
   });

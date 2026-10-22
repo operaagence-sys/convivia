@@ -173,8 +173,8 @@ enable_refresh_token_rotation = true
 # Allows refresh tokens to be reused after expiry, up to the specified interval in seconds.
 # Requires enable_refresh_token_rotation = true.
 refresh_token_reuse_interval = 10
-# Allow/disallow new user signups to your project.
-enable_signup = true
+# Inscriptions publiques fermées: les comptes sont créés par le serveur (email_confirm: true).
+enable_signup = false
 # Allow/disallow anonymous sign-ins to your project.
 enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
@@ -207,7 +207,7 @@ token_refresh = 150
 # Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).
 sign_in_sign_ups = 30
 # Number of OTP / Magic link verifications that can be made in a 5 minute interval per IP address.
-token_verifications = 30
+token_verifications = 10
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.
 web3 = 30
 
@@ -218,21 +218,24 @@ web3 = 30
 # secret = ""
 
 [auth.email]
-# Allow/disallow new user signups via email to your project.
-enable_signup = true
+# Les inscriptions par e-mail sont aussi fermées (comptes créés par le serveur).
+enable_signup = false
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
-# If enabled, users need to confirm their email address before signing in.
+# Désactivé volontairement: l'activer ouvre une limite d'e-mails commune consommable par n'importe qui.
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
-# Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
+# Local / CI only: staging is set in the Supabase dashboard (docs/setup/tranche-2-auth.md, section 5).
+# Controls the minimum amount of time that must pass before sending another code.
+max_frequency = "60s"
 # Number of characters used in the email OTP.
 otp_length = 6
-# Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+# Le code est fabriqué et vérifié par Convivia (table login_attempts, 10 min = CODE_VALIDITY_MINUTES
+# dans src/lib/auth/constants.ts). Supabase ne garde que le jeton `generateLink`, qui ne doit vivre
+# que le minimum: 60 s. Supabase n'envoie plus aucun e-mail (Send Email Hook refusant tout).
+otp_expiry = 60
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
@@ -258,8 +261,8 @@ otp_expiry = 3600
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = false
-# If enabled, users need to confirm their phone number before signing in.
-enable_confirmations = false
+# Activé volontairement: aucun numéro n'est confirmé automatiquement (sms_autoconfirm = false).
+enable_confirmations = true
 # Template for sending OTP to users
 template = "Your code is {{ .Code }}"
 # Controls the minimum amount of time that must pass before sending another sms otp.
@@ -282,9 +285,16 @@ max_frequency = "5s"
 # uri = "pg-functions://postgres/auth/before-user-created-hook"
 
 # This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
-# [auth.hook.custom_access_token]
-# enabled = true
-# uri = "pg-functions://<database>/<schema>/<hook_name>"
+# Ajoute les claims de rôle au jeton (migration 20261022100000_auth_access_token_hook.sql).
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/auth_hooks/custom_access_token"
+
+# Send Email Hook: fonction Postgres qui REFUSE tout envoi (migration
+# 20261022120000_auth_hooks_otp_only_and_email_refusal.sql). Le code part par Resend depuis Node.
+[auth.hook.send_email]
+enabled = true
+uri = "pg-functions://postgres/auth_hooks/send_email"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
 [auth.sms.twilio]

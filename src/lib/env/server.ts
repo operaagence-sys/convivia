@@ -1,5 +1,7 @@
 import 'server-only';
+import { resolveEmailConfig } from '../email/policy';
 import {
+  assertDistinctLoginSecrets,
   assertModeGuards,
   assertProductionRequiredEnv,
   assertNoSecretPublicVariables,
@@ -18,6 +20,8 @@ let cached: ServerEnv | undefined;
 
 export function parseServerEnv(source: Record<string, string | undefined>): ServerEnv {
   const clean = dropEmptyValues(source);
+  // Exception: EMAIL_REPLY_TO vide veut dire « aucun en-tête de réponse » (absent = défaut).
+  if (source.EMAIL_REPLY_TO === '') clean.EMAIL_REPLY_TO = '';
   assertNoSecretPublicVariables(clean);
   const result = serverEnvSchema.safeParse(clean);
   if (!result.success) {
@@ -34,6 +38,13 @@ export function parseServerEnv(source: Record<string, string | undefined>): Serv
     fedapayEnv: env.FEDAPAY_ENV,
     fedapaySecretKey: env.FEDAPAY_SECRET_KEY,
   });
+  // Expéditeur valide et, en production, sur convivia.app (sinon refus au démarrage).
+  resolveEmailConfig({
+    production: env.VERCEL_ENV === 'production',
+    from: env.EMAIL_FROM,
+    replyTo: env.EMAIL_REPLY_TO,
+  });
+  assertDistinctLoginSecrets(clean);
   // Production seulement: variables indispensables présentes dès le démarrage.
   assertProductionRequiredEnv(env.VERCEL_ENV, clean);
   return env;

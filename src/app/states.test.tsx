@@ -6,8 +6,6 @@ import ErrorPage from './error';
 import GlobalError from './global-error';
 import Loading from './loading';
 import GuestNotFound from './i/not-found';
-import DashboardPage from './(organizer)/dashboard/page';
-import LoginPage from './(organizer)/login/page';
 import ScanEntryPage from './(reception)/scan/page';
 import AdminHomePage from './(admin)/admin/page';
 import { messages } from '@/content/messages.fr';
@@ -53,8 +51,6 @@ describe("pages d'état", () => {
   });
 
   it.each([
-    [DashboardPage, 'Mes événements'],
-    [LoginPage, 'Connexion'],
     [ScanEntryPage, 'Scan des invitations'],
     [AdminHomePage, 'Administration'],
   ])('page provisoire %#', (Page, title) => {

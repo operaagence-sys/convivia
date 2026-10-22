@@ -18,6 +18,10 @@ export type OtpFieldProps = {
   disabled?: boolean;
   /** Appelé quand toutes les cases sont remplies. */
   onComplete?: (value: string) => void;
+  /** Nom accessible de chaque case (index de 1 à `length`); par défaut « Chiffre i sur n ». */
+  digitAriaLabel?: (index: number, length: number) => string;
+  /** Id du texte qui décrit le champ (aide), relié à chaque case. */
+  describedById?: string;
   className?: string;
 };
 
@@ -37,6 +41,8 @@ export function OtpField({
   message,
   disabled,
   onComplete,
+  digitAriaLabel,
+  describedById,
   className,
 }: OtpFieldProps) {
   const id = useId();
@@ -103,7 +109,12 @@ export function OtpField({
             autoComplete={index === 0 ? 'one-time-code' : 'off'}
             maxLength={length}
             disabled={disabled}
-            aria-label={`Chiffre ${index + 1} sur ${length}`}
+            aria-label={
+              digitAriaLabel
+                ? digitAriaLabel(index + 1, length)
+                : `Chiffre ${index + 1} sur ${length}`
+            }
+            aria-describedby={describedById}
             aria-invalid={status === 'error' ? true : undefined}
             className={cn(
               'h-12 min-w-0 max-w-12 flex-1 rounded-sm text-center text-h3 text-text-primary focus-visible:outline-none',

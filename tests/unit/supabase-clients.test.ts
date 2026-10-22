@@ -2,7 +2,6 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { NextRequest } from 'next/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createClient as createBrowserClient } from '@/lib/supabase/client';
 import { createServiceRoleClient } from '@/lib/supabase/admin';
 import { config as proxyConfig, proxy } from '@/proxy';
 import { resetServerEnvCache } from '@/lib/env/server';
@@ -36,20 +35,14 @@ describe('isolation du client service_role', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('le client navigateur et le proxy ne référencent pas la clé service_role', () => {
-    for (const file of ['lib/supabase/client.ts', 'lib/supabase/session.ts', 'proxy.ts']) {
+  it('le proxy ne référencent pas la clé service_role', () => {
+    for (const file of ['lib/supabase/session.ts', 'proxy.ts']) {
       expect(read(file)).not.toMatch(/SUPABASE_SERVICE_ROLE_KEY|supabase\/admin/);
     }
   });
 });
 
 describe('variables manquantes', () => {
-  it('le client navigateur refuse de démarrer sans URL ni clé anonyme', () => {
-    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '');
-    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', '');
-    expect(() => createBrowserClient()).toThrow(/NEXT_PUBLIC_SUPABASE_URL/);
-  });
-
   it('le client service_role refuse de démarrer sans sa clé', () => {
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
     vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', '');

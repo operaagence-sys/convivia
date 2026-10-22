@@ -120,6 +120,21 @@
 
 Source : PRD § 6.1 ; 02 § 1.1 à 1.4, § 1.19 ; 03 § 1.1, § 1.16 ; TRD D10, D11, D23, D24, § 7.
 
+> **Mise à jour à la revue de la tranche 2 (2026-10-22) — décisions D47 à D58.**
+> Ces décisions priment sur les cases ci-dessous quand elles diffèrent :
+> connexion **par e-mail seulement** en tranche 2 (D47 ; WhatsApp reporté, la
+> vérification du numéro pour l'essai vient en tranche 5, D48) ; **3 codes au
+> plus par e-mail et par heure**, 60 s entre deux envois, **5 codes faux →
+> blocage 15 min sans vérification ni envoi** (D52) ; message de code faux
+> **neutre**, sans nombre d'essais restants (D52) ; **aucun changement
+> d'e-mail ni de numéro** (D51) ; **aucune CGU avant la tranche 14** (D54) ;
+> `?ref=` seulement conservé dans la redirection `/signup` → `/login` (D57) ;
+> contournement de D24 par appel direct à Supabase Auth accepté comme limite
+> connue (D56) ; profil après le premier code : nom, ville libre, pays parmi
+> les 4 actifs (D44, D53, D55) ; e-mail envoyé par le Send Email Hook, durée du
+> code réglée à **600 s dans Supabase Auth ET dans `supabase/config.toml`**
+> (à garder alignées avec `CODE_VALIDITY_MINUTES`).
+
 - [ ] **Point d'entrée unique `/login`** (inscription + connexion) ; `/signup`
       redirige vers `/login` en **conservant `?ref=`** (02 § 1.1 à 1.4 ;
       03 § 1.1 ; TRD D23).

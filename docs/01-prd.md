@@ -111,10 +111,11 @@ Pour chaque fonctionnalité : son objectif et ses critères de réussite.
 
 ### 6.1 Inscription et compte organisateur
 - **Objectif** : permettre à un organisateur de créer un compte simplement.
-- **Réussite** : inscription par numéro WhatsApp + code de vérification, ou par
-  email + code à 6 chiffres (sans mot de passe) ; l'organisateur retrouve ses
+- **Réussite** : inscription par **e-mail + code à 6 chiffres** (sans mot de
+  passe ; connexion par e-mail seulement, décision du 2026-10-21 ; le numéro
+  WhatsApp est vérifié par code au moment de demander l'essai gratuit) ; l'organisateur retrouve ses
   événements à la reconnexion. **Inscription et connexion sont un seul
-  parcours** (décision du 2026-10-20) : l'organisateur saisit son numéro ou son
+  parcours** (décision du 2026-10-20) : l'organisateur saisit son
   e-mail, reçoit un code, et le compte est créé s'il n'existe pas ; l'écran ne
   révèle jamais si un compte existe déjà. À la **première connexion**, il
   renseigne son **nom, sa ville et son pays** avant d'arriver au tableau de

@@ -23,6 +23,19 @@ const variants: Record<ButtonVariant, string> = {
   'danger-ghost': 'bg-transparent text-error hover:bg-error-soft',
 };
 
+/** Classes d'un bouton, réutilisées par les liens qui ont l'apparence d'un bouton (`ButtonLink`). */
+export function buttonClass(
+  options: { variant?: ButtonVariant; size?: ButtonSize; fullWidth?: boolean } = {},
+): string {
+  const { variant = 'primary', size = 'default', fullWidth = false } = options;
+  return cn(
+    'relative inline-flex items-center justify-center gap-2 rounded-md px-5 text-body font-semibold transition-colors',
+    size === 'admin' ? 'h-10 text-small' : 'h-11',
+    fullWidth && 'w-full',
+    variants[variant],
+  );
+}
+
 export function Button({
   variant = 'primary',
   size = 'default',

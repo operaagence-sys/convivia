@@ -15,7 +15,7 @@
 |---|---|---|---|---|---|---|---|
 | — | Documents 01 à 09 | ✅ | ✅ | — | — | ⬜ (pas encore de dépôt git) | Questions de 09 § 22 (voir 08 § 5) |
 | 0 | Outillage : hooks, git | ✅ | ✅ | ✅ 161/161 (relance `qa-tester` sautée) | ✅ réaudit fin de tranche 1 : E2, E3, E6 corrigées ; E1, E4, E5, E7 partielles (Moyennes acceptées) | ✅ `995b70e` | Limites connues (§ 4) |
-| 1 | Socle technique | 🟡 | ✅ | ✅ Vitest 175/175, Playwright 11/11 | ✅ 0 Critique / Élevée | ✅ `995b70e` | Critère de fin : CI + preview après le premier push |
+| 1 | Socle technique | ✅ | ✅ | ✅ Vitest 178/178, Playwright 11/11 | ✅ 0 Critique / Élevée | ✅ `995b70e`, `1ab8289` (poussés) | Aperçu `main` OK ; résultat de la CI GitHub à confirmer |
 | 2 | Connexion organisateur et compte | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
 | 3 | Événements | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
 | 4 | Invités et plafond | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
@@ -32,7 +32,7 @@
 | 15 | Croissance, marges, exports | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
 | 16 | Mise en production | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ | — |
 
-**Tranche en cours** : 1 — Socle technique (construction lancée le
+**Tranche en cours** : 2 — Connexion organisateur et compte (préparation). Tranche 1 close le 2026-10-21 ; son historique suit (construction lancée le
 2026-10-21 : `devops-engineer` en premier). Hooks re-scellés (écriture
 staging, Vercel en lecture seule, 12 paquets ajoutés).
 
@@ -265,6 +265,194 @@ staging, Vercel en lecture seule, 12 paquets ajoutés).
   conventions (correctifs + base) → `qa-tester` → `security-reviewer`
   (fin de tranche + hooks réaudités + 2 contournements de hooks à
   relire).
+- **Tranche 2 — préparation** (`product-manager`) : 11 questions, 13
+  contradictions. **Décisions du porteur du projet D47 à D58** (TRD § 0,
+  PRD § 6.1, 08 tranches 2 et 5) : **connexion par e-mail seulement** ;
+  numéro vérifié par code WhatsApp **à la demande d'essai** (tranche 5) ;
+  code simulé dans un bandeau hors production ; `convivia.app` + Resend via
+  Send Email Hook, expéditeur `noreply@`, support `support@convivia.app` ;
+  aucun changement d'e-mail ; 5 codes faux → 15 min sans envoi ni
+  vérification, **3 codes / heure** ; 4 pays ; CGU en tranche 14 ; ville
+  libre ; contournement de D24 accepté comme limite (audit) ; `?ref=`
+  conservé seulement ; « Créer » vers une page provisoire.
+- Construction lancée en parallèle : `supabase-developer` (organizers,
+  login_attempts, admin_users, exclusivité, purge), `devops-engineer` (Send
+  Email Hook + Resend, variables, checklist du porteur), `ux-writer` (textes
+  et e-mail du code). Ensuite : `ui-designer`, puis `frontend-developer`
+  après le `db push`.
+- Construction (suite) : `ux-writer` ✅ (textes + `supabase/functions/_shared/login-code-email.fr.ts`) ;
+  `ui-designer` ✅ (composants `src/components/auth/`, `account/`, `layout/`,
+  non câblés) ; `devops-engineer` ✅ (`send-auth-email`, signature,
+  refus admin, `EMAIL_TEST_ALLOWLIST`, `EMAIL_FROM` / `EMAIL_REPLY_TO`
+  configurables, `LOGIN_ATTEMPTS_HASH_SECRET`, guide
+  `docs/setup/tranche-2-auth.md`) ; `supabase-developer` ✅ 5 migrations
+  `20261021150000` → `150400` + pgTAP 07–11. Décisions : longueurs nom
+  2–80 / ville 2–60, `pg_cron` par migration, motif de suspension caché,
+  compteur sans fenêtre, `organizer.signed_up` à la création, liste blanche
+  d'e-mails sur le staging. **Pas de domaine pour l'instant** : Resend sans
+  domaine (`onboarding@resend.dev`, une seule adresse destinataire).
+- **Arrêt du 2026-10-21 — point de reprise** :
+  - Fait par le porteur : `db push` des 5 migrations ✅ ; compte Resend ✅ ;
+    Auth Email (OTP 6 chiffres, 600 s), Phone désactivé ✅ ; URL
+    Configuration ✅ ; Rate Limits ✅. En cours : 2 secrets Vercel Preview
+    (`LOGIN_ATTEMPTS_HASH_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`) — à
+    confirmer.
+  - Reste au porteur, **une étape à la fois** : (1) déployer
+    `npx supabase functions deploy send-auth-email --no-verify-jwt --use-api --project-ref rvlfxpafjrnmhfxsgayd`
+    (option `--use-api` non vérifiée) ; (2) Auth → Hooks → Send Email →
+    `send-auth-email` + secret ; (3) clé API Resend ; (4) secrets de la
+    fonction : `SEND_EMAIL_HOOK_SECRET`, `RESEND_API_KEY`,
+    `EMAIL_FROM=Convivia <onboarding@resend.dev>`, `EMAIL_REPLY_TO=` vide,
+    `EMAIL_TEST_ALLOWLIST=<adresse du compte Resend>` ; (5) `npx supabase logout`.
+  - **Reprise du 2026-10-22** : secrets Vercel Preview ✅ ; fonction
+    `send-auth-email` déployée (`--use-api`) ✅ ; Send Email Hook branché
+    ✅ ; secrets de la fonction (`SEND_EMAIL_HOOK_SECRET`, `RESEND_API_KEY`,
+    `EMAIL_FROM=onboarding@resend.dev`, `EMAIL_REPLY_TO` et
+    `EMAIL_TEST_ALLOWLIST` = adresse du porteur) ✅ ; `logout` ✅.
+    Vérification post-push du `supabase-developer` ✅ : 13 migrations
+    alignées, **pgTAP 357/357**, staging propre, advisors INFO attendues,
+    types régénérés. `frontend-developer` lancé (pages et parcours).
+  - `frontend-developer` ✅ (pages `(auth)` / `(organizer)`, `src/lib/auth/`) ;
+    `conventions-keeper` ✅ 0 grave (corrections faites : clés `tooSoon`,
+    `unavailable`, `unexpected`, `nameInvalid`, `cityInvalid`, `/welcome`
+    déconnexion + suspendu ; `config.toml` OTP 600 s / 60 s) ; `qa-tester`
+    ✅ **441/441** (Vitest 411, Playwright 30, stable) ; checklist téléphone
+    tranche 2 écrite.
+  - **`security-reviewer` : commit bloqué** — **Critique** prise de contrôle
+    d'un compte pré-créé avec mot de passe (inscription Supabase ouverte) ;
+    **Élevée** session par code e-mail sur un compte admin par appel direct ;
+    **Élevée** limites par IP de Supabase sur l'IP de Vercel (blocage de
+    tous, 429 compté comme code faux) ; Moyennes : admin repérable au temps
+    de réponse, énumération par appel direct, blocage volontaire d'une
+    adresse, cookies de session sans `httpOnly` / `Secure`, jetons valables
+    1 h après déconnexion ; 6 Faibles. D56 « pas acceptable tel quel ».
+  - **Décisions du porteur du projet** : anti-robot (Turnstile) **décidé en
+    tranche 16** (énumération acceptée d'ici là) ; **limite par adresse IP
+    en plus** ; jetons d'accès **1 h**, inactivité 30 j réglée en tranche 16
+    (offre Pro). Correction lancée : `supabase-developer` (hook de jeton
+    et / ou inscriptions fermées, limite par IP) → puis `frontend-developer`
+    et `devops-engineer` → nouvel audit.
+  - `supabase-developer` ✅ (non appliqué) : `20261022100000_auth_access_token_hook`
+    (Custom Access Token Hook : organisateur = code e-mail seulement, admin =
+    mot de passe / TOTP seulement, échec fermé), `20261022100100_login_ip_attempts`
+    (limite par empreinte d'IP, fonctions `before_send` / `before_verify` à
+    2 arguments), `20261022100200_login_send_tickets` (ticket d'envoi 60 s
+    consommé par le hook e-mail) ; pgTAP 12, 13, 14 ; 07 § 2.1 et § 13
+    complétés. **Décisions** : seuils IP 10 / 10 min et 30 / 24 h
+    (demandes), 20 / 10 min et 60 / 24 h (vérifications) ; risque « une
+    source épuise une adresse » accepté ; **ticket + `rate_limit_otp` 150**
+    contre la panne globale ; purge des comptes jamais utilisés en
+    tranche 14. « Confirm email » du staging : **désactivé** (à activer).
+    Inscriptions publiques à fermer après le déploiement. Le secret
+    `LOGIN_ATTEMPTS_HASH_SECRET` (Sensitive, illisible) devra être
+    régénéré et posé à l'identique dans Vercel et les Edge Functions.
+    Lancés en parallèle : `frontend-developer` (création du compte par le
+    serveur, IP, `sb-forwarded-for`, 429 / 403, admin avant `verifyOtp`,
+    temps constant, cookies) et `devops-engineer` (ticket dans le hook,
+    `config.toml`, guide pas à pas).
+  - `frontend-developer` ✅ et `devops-engineer` ✅ (correctifs appli et
+    hook) ; pilote : format, lint, types, Vitest **481/481**, build,
+    traceurs OK.
+  - **2e audit `security-reviewer` : commit bloqué** — Critique et Élevées du
+    1er audit **corrigées** (sous réserve des réglages) ; nouvelles
+    **Élevées** : E1 code deviné par appels directs à `/verify` (le hook de
+    jeton accepte `otp` sans preuve du passage par notre route) ; E2 « Confirm
+    email » active une limite d'e-mails commune épuisable. Moyennes : M1
+    appel direct sans ticket bloque une adresse et révèle les admins ; M2
+    temps de réponse (plancher 2 s non mesuré, `/verify` sans plancher) ;
+    M3 comptes pré-créés avant la tranche 8 ; M4 quota Resend en production.
+    Faibles F1–F5 (dont détour de hook par `cat` du `devops-engineer`).
+    **2e aller-retour** sur la connexion (au 3e : exposer au porteur).
+  - **Décisions du porteur du projet** : E1 **corrigé maintenant** (ticket
+    de vérification consommé par le hook de jeton) ; « Confirm email »
+    **laissé désactivé** (étape retirée du guide). M3 ajouté en tranche 8,
+    Turnstile aussi dans Supabase Auth + M4 ajoutés en tranche 16 (08).
+    Lancés : `supabase-developer` (ticket de vérification) et
+    `devops-engineer` (hook 403 sans ticket, guide) ; ensuite
+    `frontend-developer` (ticket, plancher sur `/verify`, F1, F3, F4).
+  - `supabase-developer` : ticket de vérification écrit
+    (`20261022100300_login_verify_tickets`, pgTAP 15) mais **ne ferme pas
+    E1** : rollback de la transaction quand le hook refuse → le code reste
+    valable, et la réponse du hook diffère d'un code faux (oracle).
+    `devops-engineer` ✅ hook 403 sans ticket, guide sans « Confirm email »,
+    `rate_limit_verify` 10.
+  - **3e aller-retour → exposé au porteur du projet.** **Décision** :
+    **Convivia fabrique et vérifie le code** (code généré et stocké en
+    empreinte par Postgres, envoyé par Resend depuis Node ; à la réussite,
+    `createUser` + `generateLink` + `verifyOtp(token_hash)` côté serveur ;
+    Send Email Hook qui refuse tout ; tickets supprimés). Conception soumise
+    d'abord au `security-reviewer` (revue de conception) avant construction.
+  - **Revue de conception `security-reviewer`** : conception **valide avec 10
+    changements obligatoires** (code généré dans Node, empreinte HMAC avec
+    `LOGIN_CODE_PEPPER`, fonctions atomiques, admins sans code stocké, envoi
+    Resend par `after()`, Send Email Hook Postgres qui refuse tout et aucun
+    SMTP personnalisé, hook de jeton organisateur `otp` seul, `otp_expiry`
+    Supabase ~60 s, clients séparés, garde-fou Resend, réglages vérifiés) ;
+    ensuite 0 Critique / Élevée, 4 Moyennes (R1 énumération par appel direct,
+    R2 réglages hors code, R3 rafales d'e-mails, R4 blocage d'une adresse),
+    2 Faibles. **Décisions du porteur** : R1 **accepté** ; R3 : **plafond
+    global 300 codes / heure + alerte**, **variantes `+tag` (et points
+    Gmail) comptées comme une seule adresse** pour les quotas, **limite IPv6
+    par /48**. Tranche 8 : réinitialisation des mots de passe admin sans
+    e-mail `recovery` (à décider). Construction : `supabase-developer` lancé.
+  - Construction de la méthode « Convivia fabrique le code » ✅ :
+    `supabase-developer` (migrations `20261022120000_auth_hooks_otp_only_and_email_refusal`,
+    `20261022120100_login_codes` ; 4 anciennes migrations supprimées ;
+    seuils /48 doublés par décision du porteur), `devops-engineer`
+    (`src/lib/email/`, garde-fou Resend, variables `LOGIN_CODE_PEPPER`,
+    `EMAIL_*`, `RESEND_API_KEY` serveur, ancienne fonction supprimée sauf
+    `supabase/functions/send-auth-email/index.ts` — suppression refusée
+    par le hook, **à faire par le porteur**), `frontend-developer`
+    (parcours `/login` / `/verify`). Pilote : Vitest **501/501**, lint,
+    types, format OK.
+  - **3e audit `security-reviewer` : 0 Critique / 0 Élevée → commit possible
+    sous réserve des tests sur le staging** ; 10 changements obligatoires
+    faits ; 1 Moyenne (numéro « vérifié » sans code par `PUT /user`) et 8
+    Faibles. **Décisions** : numéro vérifié **par Convivia** en tranche 5
+    (D62) ; code **gardé** dans l'objet de l'e-mail. TRD : **D59 à D62**
+    ajoutés, § 7.2 et § 7.3 réécrits, D56 remplacé ; 08 tranche 5 mis à
+    jour. Corrections en cours : `devops-engineer` (confirmations de numéro,
+    secrets distincts, guide + vérifications), `frontend-developer`
+    (alerte `global_cap`, `email_exists`, format d'adresse),
+    `supabase-developer` (tests d'absence des anciennes fonctions).
+  - Corrections du 3e audit ✅ (confirmations de numéro, secrets distincts,
+    alerte `global_cap`, `email_exists` seul, format d'adresse unique,
+    tests d'absence des anciennes fonctions, guide « Vérifications après
+    réglages »). Porteur : ancien dossier supprimé, **`db push` des 2
+    migrations** ✅, hooks Postgres (Send Email + Custom Access Token) ✅,
+    ancienne Edge Function et ses secrets supprimés ✅, OTP Supabase 60 s,
+    Confirm email désactivé, confirmations de numéro, pas de SMTP ✅, limites
+    et transfert d'IP ✅, Vercel Preview : `LOGIN_CODE_PEPPER`,
+    `LOGIN_IP_HASH_SECRET`, `SUPABASE_SECRET_KEY`, `RESEND_API_KEY` (nouvelle
+    clé, ancienne supprimée), `EMAIL_FROM`, `EMAIL_REPLY_TO`,
+    `EMAIL_TEST_ALLOWLIST` ✅.
+  - Vérification post-push (`supabase-developer`, 3 passages : limite
+    d'utilisation puis coupure réseau) : **pgTAP 515/515** (00 à 15, après
+    correction du test 12 n° 21 qui lisait les commentaires), staging propre,
+    advisors INFO attendues ; types régénérés + `src/types/database-overrides.ts`
+    (paramètres et retours nullables). Pilote : format, lint, types,
+    **Vitest 510/510**, build, traceurs OK. Prochaines étapes : commit (sur
+    accord), push de `main`, fermeture des inscriptions publiques, test sur
+    téléphone, tests techniques de l'annexe du guide.
+  - Côté agents (historique) : vérification post-push du `supabase-developer` ; puis
+    `frontend-developer` (pages `/login`, `/verify`, profil, `/account`,
+    layouts publics / protégés, contrôles F9, routes serveur, test
+    `verify-code-form` « Vérification… » en échec à corriger) ; ensuite
+    conventions → tests (lenteur et délais dépassés de Vitest à regarder) →
+    sécurité obligatoire. Rien n'est commité depuis `1ab8289`.
+  - Le porteur du projet s'est dit **perdu** avec les longues listes :
+    lui donner **une seule étape à la fois**.
+- **Tranche 1 close (2026-10-21)** : `main` poussé par le porteur du
+  projet (`995b70e`, `1ab8289`) ; branche `production` créée et suivie par
+  Vercel (premier build de production refusé par le garde-fou, comme
+  prévu) ; variables Preview : `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `WHATSAPP_MODE=simulate`,
+  `FEDAPAY_ENV=sandbox`, `NEXT_PUBLIC_SITE_URL` ; aperçu
+  `https://convivia-git-main-art-a50a.vercel.app` vérifié par le porteur.
+  `NEXT_PUBLIC_VERCEL_*` acceptées au build (valeurs toujours contrôlées).
+  Restent : résultat de la CI GitHub (gitleaks demandera
+  `GITLEAKS_LICENSE`) ; Node à fixer en `22.x` ; protéger la branche
+  `production` sur GitHub.
 - **Reprise après redémarrage (2026-10-21)** : revue `conventions-keeper`
   lancée (correctifs M1, M3, M4, F2–F5, F7 + partie base : 8 migrations,
   pgTAP, types + critère de fin de la tranche 1).
@@ -430,7 +618,7 @@ sont bien montrés au porteur du projet (25 validations le 2026-10-21).
 |---|---|---|
 | Création de la société (D9) | ⬜ | Délai long : à lancer maintenant |
 | Domaine `convivia.app` + staging stable | ⬜ | Nécessaire dès la tranche 6 |
-| Compte Vercel, Supabase staging, GitHub | 🟡 | Tranche 1 — Supabase staging « conviva » `rvlfxpafjrnmhfxsgayd` (Paris) ✅ ; dépôt GitHub privé ✅ ; compte Vercel ✅ (projet à créer après le premier push) |
+| Compte Vercel, Supabase staging, GitHub | ✅ | Tranche 1 — Supabase staging « conviva » `rvlfxpafjrnmhfxsgayd` (Paris) ✅ ; dépôt GitHub privé ✅ ; projet Vercel ✅ (branche de production `production`, aperçu stable `convivia-git-main-art-a50a.vercel.app`, variables Preview seulement) |
 | Sentry (région UE) | ⬜ | Reporté : avant la tranche 6 |
 | Resend + domaine vérifié | ⬜ | — |
 | FedaPay sandbox | ⬜ | Tranche 6 |

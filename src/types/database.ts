@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          failed_logins: number
+          full_name: string
+          is_active: boolean
+          last_login_at: string | null
+          locked_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          failed_logins?: number
+          full_name: string
+          is_active?: boolean
+          last_login_at?: string | null
+          locked_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          failed_logins?: number
+          full_name?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          locked_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       analytics_events: {
         Row: {
           city: string | null
@@ -140,6 +187,147 @@ export type Database = {
         }
         Relationships: []
       }
+      login_attempts: {
+        Row: {
+          code_expires_at: string | null
+          code_hmac: string | null
+          created_at: string
+          failed_count: number
+          identifier_hash: string
+          locked_until: string | null
+          send_times: string[]
+          updated_at: string
+        }
+        Insert: {
+          code_expires_at?: string | null
+          code_hmac?: string | null
+          created_at?: string
+          failed_count?: number
+          identifier_hash: string
+          locked_until?: string | null
+          send_times?: string[]
+          updated_at?: string
+        }
+        Update: {
+          code_expires_at?: string | null
+          code_hmac?: string | null
+          created_at?: string
+          failed_count?: number
+          identifier_hash?: string
+          locked_until?: string | null
+          send_times?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      login_code_global_counter: {
+        Row: {
+          cap_alerted_at: string | null
+          created_at: string
+          id: boolean
+          issue_times: string[]
+          updated_at: string
+        }
+        Insert: {
+          cap_alerted_at?: string | null
+          created_at?: string
+          id?: boolean
+          issue_times?: string[]
+          updated_at?: string
+        }
+        Update: {
+          cap_alerted_at?: string | null
+          created_at?: string
+          id?: boolean
+          issue_times?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      login_ip_attempts: {
+        Row: {
+          action: string
+          attempt_times: string[]
+          created_at: string
+          ip_hash: string
+          ip_scope: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          attempt_times?: string[]
+          created_at?: string
+          ip_hash: string
+          ip_scope: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          attempt_times?: string[]
+          created_at?: string
+          ip_hash?: string
+          ip_scope?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      organizers: {
+        Row: {
+          city: string | null
+          country_code: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          status: Database["public"]["Enums"]["organizer_status"]
+          suspended_at: string | null
+          suspended_by: string | null
+          suspension_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          status?: Database["public"]["Enums"]["organizer_status"]
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["organizer_status"]
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizers_country_code_fkey"
+            columns: ["country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "organizers_suspended_by_fkey"
+            columns: ["suspended_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           created_at: string
@@ -259,7 +447,43 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      auth_email_is_admin: { Args: { p_email: string }; Returns: boolean }
+      ensure_organizer: {
+        Args: { p_user_id: string }
+        Returns: {
+          created: boolean
+          organizer_status: Database["public"]["Enums"]["organizer_status"]
+          profile_complete: boolean
+        }[]
+      }
+      login_code_issue: {
+        Args: {
+          p_code_hmac: string
+          p_email: string
+          p_identifier_hash: string
+          p_ip_hash: string
+          p_ip48_hash: string
+        }
+        Returns: {
+          allowed: boolean
+          deliver: boolean
+          reason: string
+          retry_at: string
+        }[]
+      }
+      login_code_verify: {
+        Args: {
+          p_code_hmac: string
+          p_email: string
+          p_identifier_hash: string
+          p_ip_hash: string
+          p_ip48_hash: string
+        }
+        Returns: {
+          result: string
+          retry_at: string
+        }[]
+      }
     }
     Enums: {
       admin_role:

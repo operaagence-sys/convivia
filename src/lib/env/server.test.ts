@@ -57,6 +57,10 @@ describe('parseServerEnv', () => {
     const required = Object.fromEntries(PRODUCTION_REQUIRED_ENV.map((name) => [name, 'factice']));
     const env = parseServerEnv({
       ...required,
+      LOGIN_ATTEMPTS_HASH_SECRET: 'x'.repeat(32),
+      LOGIN_IP_HASH_SECRET: 'y'.repeat(32),
+      LOGIN_CODE_PEPPER: 'z'.repeat(32),
+      SUPABASE_SECRET_KEY: 'sb_secret_fake',
       NEXT_PUBLIC_SITE_URL: 'https://example.test',
       NEXT_PUBLIC_SUPABASE_URL: 'https://example.test',
       VERCEL_ENV: 'production',
@@ -126,5 +130,112 @@ describe('accès via process.env', () => {
     vi.stubEnv('FEDAPAY_SECRET_KEY', fakeKey('sandbox'));
     resetServerEnvCache();
     expect(getFedapayConfig().env).toBe('sandbox');
+  });
+});
+
+describe('secrets de connexion (tranche 2)', () => {
+  it('refuse un secret de hachage de moins de 32 caractères', () => {
+    expect(() => parseServerEnv({ LOGIN_ATTEMPTS_HASH_SECRET: 'x'.repeat(31) })).toThrow(
+      /LOGIN_ATTEMPTS_HASH_SECRET/,
+    );
+    expect(() => parseServerEnv({ LOGIN_IP_HASH_SECRET: 'y'.repeat(31) })).toThrow(
+      /LOGIN_IP_HASH_SECRET/,
+    );
+    expect(
+      parseServerEnv({
+        LOGIN_ATTEMPTS_HASH_SECRET: 'x'.repeat(32),
+        LOGIN_IP_HASH_SECRET: 'y'.repeat(32),
+      }).LOGIN_IP_HASH_SECRET,
+    ).toHaveLength(32);
+  });
+
+  it('SUPABASE_SECRET_KEY doit commencer par sb_secret_', () => {
+    expect(() => parseServerEnv({ SUPABASE_SECRET_KEY: 'eyJhbGciOi.service.role' })).toThrow(
+      /SUPABASE_SECRET_KEY/,
+    );
+    expect(parseServerEnv({ SUPABASE_SECRET_KEY: 'sb_secret_abc' }).SUPABASE_SECRET_KEY).toBe(
+      'sb_secret_abc',
+    );
+  });
+
+  it('SUPABASE_SECRET_KEY ne peut jamais être exposée au navigateur', () => {
+    expect(() => parseServerEnv({ NEXT_PUBLIC_SUPABASE_SECRET_KEY: 'sb_secret_abc' })).toThrow();
+    expect(() => parseServerEnv({ NEXT_PUBLIC_SUPABASE_ANON_KEY: 'sb_secret_abc' })).toThrow();
+  });
+
+  it('les variables de connexion et d’e-mail sont exigées en production', () => {
+    for (const name of [
+      'LOGIN_ATTEMPTS_HASH_SECRET',
+      'LOGIN_IP_HASH_SECRET',
+      'LOGIN_CODE_PEPPER',
+      'SUPABASE_SECRET_KEY',
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'RESEND_API_KEY',
+    ])
+      expect(PRODUCTION_REQUIRED_ENV).toContain(name);
+  });
+
+  it('refuse deux secrets de connexion identiques, sans afficher la valeur', () => {
+    const same = 's'.repeat(32);
+    const pairs: Array<Record<string, string>> = [
+      { LOGIN_CODE_PEPPER: same, LOGIN_ATTEMPTS_HASH_SECRET: same },
+      { LOGIN_CODE_PEPPER: same, LOGIN_IP_HASH_SECRET: same },
+      { LOGIN_ATTEMPTS_HASH_SECRET: same, LOGIN_IP_HASH_SECRET: same },
+    ];
+    for (const pair of pairs) {
+      expect(() => parseServerEnv(pair)).toThrow(/identiques refusés/);
+      expect(() => parseServerEnv(pair)).toThrow(
+        expect.objectContaining({ message: expect.not.stringContaining(same) }),
+      );
+    }
+    expect(() =>
+      parseServerEnv({
+        LOGIN_CODE_PEPPER: 'a'.repeat(32),
+        LOGIN_ATTEMPTS_HASH_SECRET: 'b'.repeat(32),
+        LOGIN_IP_HASH_SECRET: 'c'.repeat(32),
+      }),
+    ).not.toThrow();
+  });
+
+  it('refuse un poivre de code de moins de 32 caractères', () => {
+    expect(() => parseServerEnv({ LOGIN_CODE_PEPPER: 'p'.repeat(31) })).toThrow(
+      /LOGIN_CODE_PEPPER/,
+    );
+    expect(parseServerEnv({ LOGIN_CODE_PEPPER: 'p'.repeat(32) }).LOGIN_CODE_PEPPER).toHaveLength(
+      32,
+    );
+  });
+});
+
+describe('e-mail (Resend)', () => {
+  it('valide l’expéditeur, la réponse et la liste blanche', () => {
+    expect(() => parseServerEnv({ EMAIL_FROM: 'pas une adresse' })).toThrow(/EMAIL_FROM/);
+    expect(() => parseServerEnv({ EMAIL_REPLY_TO: 'x' })).toThrow(/EMAIL_REPLY_TO/);
+    expect(() => parseServerEnv({ EMAIL_TEST_ALLOWLIST: 'a@x.fr, nope' })).toThrow(
+      /EMAIL_TEST_ALLOWLIST/,
+    );
+    expect(
+      parseServerEnv({ EMAIL_TEST_ALLOWLIST: 'A@x.fr, b@y.com' }).EMAIL_TEST_ALLOWLIST,
+    ).toEqual(['a@x.fr', 'b@y.com']);
+    expect(parseServerEnv({}).EMAIL_TEST_ALLOWLIST).toEqual([]);
+  });
+
+  it('EMAIL_REPLY_TO vide est conservé (aucun en-tête), absent = défaut', () => {
+    expect(parseServerEnv({ EMAIL_REPLY_TO: '' }).EMAIL_REPLY_TO).toBe('');
+    expect(parseServerEnv({}).EMAIL_REPLY_TO).toBeUndefined();
+  });
+
+  it('un expéditeur hors convivia.app est refusé en production, accepté ailleurs', () => {
+    const production = {
+      VERCEL_ENV: 'production',
+      WHATSAPP_MODE: 'live',
+      FEDAPAY_ENV: 'live',
+      EMAIL_FROM: 'Convivia <onboarding@resend.dev>',
+    };
+    expect(() => parseServerEnv(production)).toThrow(/convivia\.app/);
+    expect(
+      parseServerEnv({ EMAIL_FROM: 'Convivia <onboarding@resend.dev>', VERCEL_ENV: 'preview' })
+        .EMAIL_FROM,
+    ).toBe('Convivia <onboarding@resend.dev>');
   });
 });

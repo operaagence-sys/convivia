@@ -1,15 +1,14 @@
-import Link from 'next/link';
-import { StatePage, stateActionClass } from '@/components/state/state-page';
 import { messages } from '@/content/messages.fr';
+import { requireOrganizer } from '@/lib/auth/organizer-session';
 
-// Page provisoire (tranche 1). Le noindex vient du layout du groupe de routes.
-export default function DashboardPage() {
-  const m = messages.placeholder;
+// Page provisoire jusqu'à la tranche 3 (aucun événement n'existe encore).
+export default async function DashboardPage() {
+  await requireOrganizer();
+  const m = messages.placeholder.dashboard;
   return (
-    <StatePage title={m.dashboard.title} description={m.dashboard.description}>
-      <Link href="/" className={stateActionClass}>
-        {m.home}
-      </Link>
-    </StatePage>
+    <section className="flex flex-col gap-2">
+      <h1 className="text-h1">{m.title}</h1>
+      <p className="text-small text-text-secondary">{m.description}</p>
+    </section>
   );
 }

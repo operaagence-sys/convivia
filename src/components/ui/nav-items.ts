@@ -10,10 +10,13 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
+import { messages } from '@/content/messages.fr';
+
+const nav = messages.nav;
 
 export type NavItem = {
   href: string;
-  /** Libellé court (≤ 10 caractères pour tenir à 4-5 onglets sur 320 px). PROVISOIRE (ux-writer). */
+  /** Libellé court (≤ 10 caractères pour tenir à 4-5 onglets sur 320 px), issu de `messages.nav`. */
   label: string;
   icon: LucideIcon;
   /** `exact`: actif seulement sur cette adresse; `prefix`: actif aussi sur ses sous-pages. */
@@ -27,9 +30,9 @@ export type NavItem = {
  * Le « + » au centre est l'action la plus fréquente d'un nouvel utilisateur (/events/new).
  */
 export const organizerNavItems: readonly NavItem[] = [
-  { href: '/dashboard', label: 'Événements', icon: CalendarDays, match: 'prefix' },
-  { href: '/events/new', label: 'Créer', icon: CirclePlus, match: 'exact' },
-  { href: '/account', label: 'Compte', icon: UserRound, match: 'prefix' },
+  { href: '/dashboard', label: nav.organizer.events, icon: CalendarDays, match: 'prefix' },
+  { href: '/events/new', label: nav.organizer.create, icon: CirclePlus, match: 'exact' },
+  { href: '/account', label: nav.organizer.account, icon: UserRound, match: 'prefix' },
 ];
 
 /**
@@ -40,10 +43,10 @@ export const organizerNavItems: readonly NavItem[] = [
 export function eventNavItems(eventId: string): readonly NavItem[] {
   const base = `/events/${eventId}`;
   return [
-    { href: base, label: 'Aperçu', icon: LayoutGrid, match: 'exact' },
-    { href: `${base}/guests`, label: 'Invités', icon: Users, match: 'prefix' },
-    { href: `${base}/send`, label: 'Envoi', icon: Send, match: 'prefix' },
-    { href: `${base}/rsvp`, label: 'Réponses', icon: ClipboardCheck, match: 'prefix' },
+    { href: base, label: nav.event.overview, icon: LayoutGrid, match: 'exact' },
+    { href: `${base}/guests`, label: nav.event.guests, icon: Users, match: 'prefix' },
+    { href: `${base}/send`, label: nav.event.send, icon: Send, match: 'prefix' },
+    { href: `${base}/rsvp`, label: nav.event.rsvp, icon: ClipboardCheck, match: 'prefix' },
   ];
 }
 
@@ -51,8 +54,8 @@ export function eventNavItems(eventId: string): readonly NavItem[] {
 export function hostNavItems(eventId: string): readonly NavItem[] {
   const base = `/scan/${eventId}`;
   return [
-    { href: base, label: 'Scanner', icon: ScanLine, match: 'exact' },
-    { href: `${base}/live`, label: 'Arrivées', icon: Radio, match: 'exact' },
+    { href: base, label: nav.host.scan, icon: ScanLine, match: 'exact' },
+    { href: `${base}/live`, label: nav.host.arrivals, icon: Radio, match: 'exact' },
   ];
 }
 

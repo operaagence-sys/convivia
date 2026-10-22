@@ -1,7 +1,7 @@
 import 'server-only';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { getPublicSupabaseConfig } from '@/lib/env/public';
-import type { Database } from '@/types/database';
+import type { Database } from '@/types/database-overrides';
 
 /**
  * Client anonyme sans cookies ni session, pour les pages invités (`/i/*`): il ne lit et

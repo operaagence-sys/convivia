@@ -145,14 +145,16 @@ Ci-dessous, « Revues » rappelle l'ordre applicable à la tranche.
 - **Périmètre** :
   - `/login` unique (inscription + connexion), `/verify`, `/signup` →
     `/login` avec `?ref=` conservé ;
-  - code e-mail (Inbucket en local) et code WhatsApp (mode `simulate`) via le
-    Send SMS Hook et l'Edge Function `send-login-code` ;
+  - **code e-mail seulement** (D47) : Send Email Hook + Resend (D50), sur le
+    staging (pas de Supabase local, donc pas d'Inbucket) ; plus de code
+    WhatsApp à la connexion ;
   - compteur `login_attempts` (5 codes faux → 15 min) ; identifiants admin
     refusés par `/login` avec le même message ;
   - **écran de profil après le premier code** : nom, ville, pays (D44) ;
   - `/account` : modifier nom, ville, pays ; se déconnecter ; déconnecter
-    toutes les sessions ; ajouter un numéro WhatsApp vérifié (TRD § 7.3) ;
-    bandeau « compte suspendu ».
+    toutes les sessions ; bandeau « compte suspendu » (contact
+    support@convivia.app). « Ajouter un numéro vérifié » passe en
+    tranche 5, avec l'essai (D48).
   - **navigation** (reportée de la tranche 1, décision du 2026-10-21) :
     `BottomNav` / `SidebarNav` et `ToastProvider` montés dans les mises en
     page des faces ; onglets et libellés proposés (`nav-items.ts`) **validés
@@ -160,8 +162,9 @@ Ci-dessous, « Revues » rappelle l'ordre applicable à la tranche.
 - **Tables** : `organizers`, `login_attempts`, `admin_users` (déclencheur
   d'exclusivité organisateur / admin).
 - **Agents** : `frontend-developer` (responsable) ; `supabase-developer` ;
-  `whatsapp-specialist` (hook et code WhatsApp) ; `devops-engineer` (e-mails
-  locaux) ; `ux-writer` ; `ui-designer`.
+  `devops-engineer` (Send Email Hook + Resend, réglages Auth) ;
+  `ux-writer` ; `ui-designer`. Le `whatsapp-specialist` n'intervient plus
+  en tranche 2 (D47).
 - **Revues** : conventions → tests → **sécurité obligatoire** (connexion).
 - **Tests** : même message que le compte existe ou non ; code expiré (10
   min) ; renvoi après 60 s ; 6e code faux refusé 15 min, même sans compte ;
@@ -170,9 +173,16 @@ Ci-dessous, « Revues » rappelle l'ordre applicable à la tranche.
   sessions.
 - **Critère de fin** : parcours complet sur vrai téléphone (iPhone et
   Android), audit sécurité sans problème grave.
-- **Décisions à trancher avant** : Q4 (changement d'e-mail ou de numéro
-  vérifié) ; Q20 (acceptation des CGU à l'inscription ?) ; comment lire le
-  code simulé en local sans l'écrire dans les journaux.
+- **Décisions prises le 2026-10-21** : D47 à D58 (TRD § 0) — connexion par
+  e-mail seulement, Send Email Hook + Resend sur `convivia.app`, aucun
+  changement d'e-mail (Q4), 5 codes faux → 15 min sans envoi ni
+  vérification et **3 codes par heure**, 4 pays, rien sur les CGU avant la
+  tranche 14 (Q20), ville libre, contournement de D24 accepté comme limite,
+  `?ref=` conservé seulement, « Créer » vers une page provisoire.
+- **Prérequis du porteur du projet** : `convivia.app` acheté et vérifié dans
+  Resend (SPF, DKIM, DMARC) ; réglages Supabase Auth et secrets des Edge
+  Functions (liste du `devops-engineer`) ; `SUPABASE_SERVICE_ROLE_KEY` et
+  secret HMAC en Preview ; `db push` de la migration.
 
 ### Tranche 3 — Événements
 - **Objectif** : créer, lister et modifier un événement (mariage d'abord ;
@@ -233,6 +243,12 @@ Ci-dessous, « Revues » rappelle l'ordre applicable à la tranche.
   TRD § 2 (modes, dispatcher, exclusion, webhooks), § 4, § 11.2, D2, D14,
   D38, D42, D43 ; 07 § 5.4, § 8.6, § 9 ; 09 § 6.3, § 7, § 9.
 - **Périmètre** :
+  - **vérification du numéro** au moment de demander l'essai (D48) : code
+    **fabriqué et vérifié par Convivia** (D62, même modèle que la connexion
+    D59 ; jamais `phone_confirmed_at` de Supabase), envoyé par WhatsApp
+    (modèle `login_code_v1`), 3 codes par heure (D52), bandeau « mode
+    simulé » hors production (D49), message « ce numéro n'utilise pas
+    WhatsApp » ; `whatsapp-specialist` + `supabase-developer` ;
   - essai : `claim_trial` (numéro vérifié, un essai par numéro, **refusé si
     la liste compte plus de 10 places**, D43 ; refusé après un paiement) ;
   - envoi immédiat en mode `simulate` : dispatcher (`pg_cron` + pgmq),
@@ -340,6 +356,12 @@ Ci-dessous, « Revues » rappelle l'ordre applicable à la tranche.
   § 3.6, § 3.7, § 3.9 ; TRD § 8, D33, D35, D36, D40 ; 07 § 2.2-2.6, § 8.4,
   § 13, § 14 ; 09 § 2.1, § 11, § 18.
 - **Périmètre** :
+  - **Sécurité des comptes admin** (audit tranche 2, M3) : chaque admin est
+    créé sur un **compte neuf**, ou bien mot de passe réinitialisé, facteurs
+    MFA supprimés et sessions révoquées avant de lui donner un rôle ; contrôle
+    des comptes non admin ayant un mot de passe ; ajouter `recovery` aux
+    méthodes admin du Custom Access Token Hook ; empêcher l'enrôlement TOTP
+    des organisateurs ;
   - création du **premier super-admin** (procédure à définir) ;
   - `/admin/login` complet (mot de passe, TOTP, 10 codes de secours,
     blocage, `/admin/reset`, session 8 h / 30 min) ;
@@ -511,6 +533,11 @@ Ci-dessous, « Revues » rappelle l'ordre applicable à la tranche.
 - **Objectif** : ouvrir au public.
 - **À relire** : TRD § 2.9, § 3.4, § 12, § 15, § 17.1 ; PRD § 9.
 - **Périmètre** : société créée ; vérification d'entreprise Meta ; numéro
+  **Connexion (audit tranche 2)** : anti-robot **Turnstile** sur `/login`
+  **et** dans Supabase Auth (CAPTCHA sur `/otp`, route serveur exemptée — à
+  vérifier) ; inactivité de session 30 jours (offre Pro Supabase) ; forfait
+  Resend dimensionné et envois surveillés (M4) ; `PRODUCTION_SUPABASE_PROJECT_ID`
+  renseigné ; « Confirm email » **désactivé** ;
   dédié et nom affiché ; modèles validés en production ; FedaPay live (et
   réponses sur CI / TG / SN) ; domaine `convivia.app` ; projet Supabase
   production (accès restreint, sauvegardes) ; pages légales validées ;

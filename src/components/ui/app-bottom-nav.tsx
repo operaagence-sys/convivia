@@ -1,12 +1,19 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { messages } from '@/content/messages.fr';
 import { BottomNav } from './bottom-nav';
 import { eventNavItems, hostNavItems, organizerNavItems } from './nav-items';
 
 /** Barre organisateur hors événement (liste, création, compte). */
 export function OrganizerBottomNav() {
-  return <BottomNav items={organizerNavItems} pathname={usePathname()} />;
+  return (
+    <BottomNav
+      items={organizerNavItems}
+      pathname={usePathname()}
+      ariaLabel={messages.nav.organizer.ariaLabel}
+    />
+  );
 }
 
 /** Barre organisateur dans un événement. */
@@ -15,7 +22,7 @@ export function EventBottomNav({ eventId }: { eventId: string }) {
     <BottomNav
       items={eventNavItems(eventId)}
       pathname={usePathname()}
-      ariaLabel="Navigation de l'événement"
+      ariaLabel={messages.nav.event.ariaLabel}
     />
   );
 }
@@ -26,7 +33,7 @@ export function HostBottomNav({ eventId }: { eventId: string }) {
     <BottomNav
       items={hostNavItems(eventId)}
       pathname={usePathname()}
-      ariaLabel="Navigation de l'accueil"
+      ariaLabel={messages.nav.host.ariaLabel}
     />
   );
 }

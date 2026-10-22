@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getPublicSupabaseConfig } from '@/lib/env/public';
-import type { Database } from '@/types/database';
+import { getSessionCookieOptions } from './cookie-options';
+import type { Database } from '@/types/database-overrides';
 
 /** Chemins sans session ni cookie d'authentification (pages invités). */
 export function isSessionExempt(pathname: string): boolean {
@@ -11,6 +12,19 @@ export function isSessionExempt(pathname: string): boolean {
 /** Cookie de session Supabase (`sb-<ref>-auth-token`, éventuellement découpé en `.0`, `.1`). */
 function hasAuthCookie(request: NextRequest): boolean {
   return request.cookies.getAll().some(({ name }) => /^sb-.+-auth-token(\.\d+)?$/.test(name));
+}
+
+/**
+ * Refus du Custom Access Token Hook: HTTP 403 de code `access_denied`. Selon la version de
+ * Supabase Auth, le code peut manquer: le refus est alors reconnu par le statut 403 ET le message
+ * (audit F4). Un 403 d'une autre cause ne ferme pas la session.
+ */
+export function isAccessDenied(
+  error: { status?: number; code?: string; message?: string } | null,
+): boolean {
+  if (!error) return false;
+  if (error.code === 'access_denied') return true;
+  return error.status === 403 && /access_denied/i.test(error.message ?? '');
 }
 
 /**
@@ -29,6 +43,7 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   const config = getPublicSupabaseConfig();
 
   const supabase = createServerClient<Database>(config.url, config.anonKey, {
+    cookieOptions: getSessionCookieOptions(),
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -46,6 +61,24 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
   });
 
   // getUser() valide le jeton auprès de Supabase Auth (getSession() ne le vérifie pas).
-  await supabase.auth.getUser();
+  const { error } = await supabase.auth.getUser();
+
+  // Le hook d'accès refuse le rafraîchissement (403 `access_denied`: compte admin, ou compte qui
+  // n'a plus le droit d'obtenir un jeton): session fermée ici (cookies effacés) et retour à /login.
+  if (isAccessDenied(error) && request.nextUrl.pathname !== '/login') {
+    await supabase.auth.signOut({ scope: 'local' });
+    const redirect = NextResponse.redirect(new URL('/login', request.url));
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    // Ceinture et bretelles: les cookies de session de la requête sont expirés quoi qu'il arrive.
+    for (const { name } of request.cookies.getAll()) {
+      if (/^sb-.+-auth-token(\.\d+)?$/.test(name)) {
+        redirect.cookies.set(name, '', { ...getSessionCookieOptions(), maxAge: 0 });
+      }
+    }
+    for (const [key, value] of response.headers) {
+      if (key.toLowerCase() === 'cache-control') redirect.headers.set(key, value);
+    }
+    return redirect;
+  }
   return response;
 }

@@ -2,7 +2,8 @@ import 'server-only';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getPublicSupabaseConfig } from '@/lib/env/public';
-import type { Database } from '@/types/database';
+import { getSessionCookieOptions } from './cookie-options';
+import type { Database } from '@/types/database-overrides';
 
 /**
  * Client Supabase serveur (Server Components, Server Actions, Route Handlers), lié à la
@@ -10,9 +11,11 @@ import type { Database } from '@/types/database';
  * Ne pas l'utiliser pour `/i/*` (pages invités sans session): voir `createAnonServerClient`.
  */
 export async function createClient() {
-  const { url, anonKey } = getPublicSupabaseConfig();
+  // `cookies()` d'abord : la page devient dynamique (jamais prérendue au build, sans variables).
   const cookieStore = await cookies();
+  const { url, anonKey } = getPublicSupabaseConfig();
   return createServerClient<Database>(url, anonKey, {
+    cookieOptions: getSessionCookieOptions(),
     cookies: {
       getAll() {
         return cookieStore.getAll();

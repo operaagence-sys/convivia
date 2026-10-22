@@ -191,12 +191,58 @@ première vérification de code).
 | SA | `UPDATE` de `status`, `suspended_*` via `suspend_organizer()` / `reactivate_organizer()` (journalisées) | Une suspension ne peut pas être faite en silence ni par un autre rôle. |
 | **Ne voit jamais** | MKT (seulement des agrégats ville/pays/canal), CNT, anon, I, A | — |
 
-**`login_attempts`** (TRD D24) : compteur des codes de connexion faux, indexé
-par l'**empreinte** HMAC de l'e-mail ou du numéro (le compte peut ne pas
-exister encore, D23). Colonnes : `identifier_hash` (PK), `failed_count`,
-`locked_until`, `updated_at`. Lecture et écriture par le serveur seulement ;
-purge des lignes inactives depuis plus de 48 h. *Risque évité : deviner un
-code par essais répétés, sans révéler si un compte existe.*
+**`login_attempts`** (TRD D24 ; refonte du 2026-10-22 : Convivia fabrique et
+vérifie lui-même le code, Supabase Auth ne sert qu'à créer la session) : une
+ligne par **adresse de quota**, indexée par l'**empreinte** HMAC de l'adresse
+normalisée pour les quotas (minuscules, sans « +tag », sans points pour
+Gmail ; secret `LOGIN_ATTEMPTS_HASH_SECRET` côté Node) : les variantes d'une
+même boîte partagent 60 s, 3 / h et les 5 échecs (le compte, lui, reste
+l'adresse exacte). Colonnes : `identifier_hash` (PK), `failed_count`,
+`locked_until`, `send_times` (codes émis dans l'heure, 3 au plus, D52),
+`code_hmac` (empreinte du code actif : HMAC-SHA256(`LOGIN_CODE_PEPPER`,
+« login-code:v1: » ‖ empreinte ‖ « : » ‖ code ‖ « : » ‖ e-mail exact) ; le
+code est tiré dans Node et n'entre jamais dans la base), `code_expires_at`
+(10 min), `created_at`, `updated_at`. Écrite seulement par
+`login_code_issue(identifiant, ip, ip48, code_hmac, e-mail)` et
+`login_code_verify(identifiant, ip, ip48, code_hmac, e-mail)` (SECURITY
+DEFINER, `service_role`), sous verrou ; usage unique ; échec compté même sans
+code ni compte ; adresse admin : mêmes quotas, aucun code utilisable, jamais
+« ok ». Purge des lignes inactives depuis plus de 48 h. *Risque évité :
+deviner un code par essais répétés, sans révéler si un compte existe.*
+
+**`login_ip_attempts`** (audit sécurité de la tranche 2 ; décisions du
+porteur du projet du 2026-10-22) : limite par IP des demandes et des
+vérifications, indexée par l'**empreinte** HMAC de l'IP (secret
+`LOGIN_IP_HASH_SECRET` côté Node), jamais l'IP en clair. Colonnes :
+`ip_hash` + `ip_scope` (`addr` : IPv4 ou préfixe IPv6 /64 ; `v6_48` : préfixe
+IPv6 /48) + `action` (`send_code` | `verify_code`) (PK), `attempt_times`,
+`created_at`, `updated_at`. Seuils validés (`addr`) : demandes 10 / 10 min et
+30 / 24 h ; vérifications 20 / 10 min et 60 / 24 h. Seuils validés
+(`v6_48`, 2026-10-22) : demandes 60 / 10 min et 200 / 24 h ; vérifications
+120 / 10 min et 400 / 24 h. Contrôlée en premier par `login_code_issue` et
+`login_code_verify` (raison `ip_limited`). Serveur seulement ; purge à 48 h.
+*Risque évité : une seule source (ou un /48 entier) bloque de nombreuses
+adresses, envoie des codes en masse ou devine un code sur plusieurs
+adresses.*
+
+**`login_code_global_counter`** (décision R3 du porteur du projet du
+2026-10-22) : une seule ligne ; dates des codes émis dans l'heure glissante
+(`issue_times`, 300 au plus) et dernière alerte (`cap_alerted_at`). Au-delà
+de **300 codes par heure pour toute la plateforme**, refus neutre pour tous
+(`global_cap`) et, au plus une fois par heure, événement fixe
+`auth.login_code_global_cap_reached` dans `audit_log` (acteur `system`).
+Aucune donnée personnelle ; serveur seulement. *Risque évité : une rafale
+d'e-mails (beaucoup d'IP, beaucoup d'adresses) qui épuise le quota Resend ou
+dégrade la réputation du domaine.*
+
+Les tickets d'envoi et de vérification (`login_send_tickets`,
+`login_verify_tickets`) et les fonctions `login_attempt_before_send`,
+`login_attempt_before_verify`, `login_attempt_reset` et
+`login_attempt_status` sont **supprimés** (refonte du 2026-10-22). Hooks
+Supabase Auth (schéma `auth_hooks`, `supabase_auth_admin` seulement) :
+`send_email` refuse tout envoi, quel que soit le type ; `custom_access_token`
+n'accepte que `otp` pour un compte non admin, `password` / `totp` pour un
+admin actif, rien pour un admin désactivé.
 
 ### 2.2 `admin_users`
 
@@ -1201,7 +1247,7 @@ L = lecture, E = écriture (directe ou par fonction), Ag = agrégats seulement,
 |---|---|---|---|---|---|---|---|---|
 | `organizers` | L/E (sa ligne) | — | — | L, E statut | Ag | L (n° masqué) | L | — |
 | `admin_users`, `admin_roles` | — | — | — | L/E | sa ligne | sa ligne | sa ligne | sa ligne |
-| `admin_recovery_codes`, `login_attempts` | — | — | — | — (serveur seul) | — | — | — | — |
+| `admin_recovery_codes`, `login_attempts`, `login_ip_attempts`, `login_code_global_counter` | — | — | — | — (serveur seul) | — | — | — | — |
 | `admin_role_permissions` | — | — | — | L | L | L | L | L |
 | `audit_log` | — | — | — | L | — | — | — | — |
 | `support_notes` | — | — | — | L/E | — | — | L/E | — |

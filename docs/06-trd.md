@@ -73,6 +73,22 @@ que D40 à D42) :
 | D44 | Profil de l'organisateur | **Nom, ville, pays demandés après le premier code**, avant le tableau de bord ; modifiables dans `/account` ; le nom signe « De la part de [organisateur] » — 2026-10-21 |
 | D45 | Nom de l'invité | **Prénom obligatoire** (variable des messages) + **nom facultatif** — 2026-10-21 |
 | D46 | Ordre de construction | **Mariage** construit en premier de bout en bout (`08-plan-implementation.md`) — 2026-10-21 |
+| D47 | Canal de connexion | **Connexion de l'organisateur par e-mail seulement** (code à 6 chiffres) : plus de code WhatsApp à la connexion (remplace la connexion par numéro de D10 / § 7.1) — 2026-10-21 |
+| D48 | Numéro vérifié | Vérifié par **un code WhatsApp envoyé au moment de demander l'essai** (tranche 5), plafonné comme les codes de connexion (D52) ; « ajouter un numéro vérifié » quitte `/account` en tranche 2 — 2026-10-21 |
+| D49 | Code WhatsApp simulé | Hors production, en `simulate`, le code de vérification du numéro s'affiche dans un **bandeau « mode simulé »** de l'écran de saisie, au seul navigateur qui l'a demandé, jamais dans les journaux ; tests automatiques avec des identifiants de test à code fixe — 2026-10-21 |
+| D50 | E-mails | Domaine **`convivia.app`** acheté maintenant ; envoi par **Resend depuis le serveur Next.js** (D59 ; à l'origine : via le Send Email Hook de Supabase) ; expéditeur **Convivia <noreply@convivia.app>**, réponse et contact support **support@convivia.app** (Q12) — 2026-10-21. **En attendant l'achat du domaine** : Resend sans domaine vérifié, expéditeur `onboarding@resend.dev` vers la seule adresse du compte Resend, expéditeur et réponse réglés par les secrets `EMAIL_FROM` / `EMAIL_REPLY_TO` (refus hors `convivia.app` en production) |
+| D51 | Changement d'e-mail ou de numéro | **Aucun au MVP** (Q4) — 2026-10-21 |
+| D52 | Blocage et plafond des codes | 5 codes faux → 15 min **sans vérification ni nouvel envoi** pour cet identifiant ; **3 codes au plus par identifiant et par heure** ; compteur remis à zéro après un code juste ; limites par IP de Supabase réglées — 2026-10-21 |
+| D53 | Numéros d'organisateur | Seulement les **4 pays actifs** (BJ, CI, TG, SN) ; la diaspora s'inscrit par e-mail — 2026-10-21 |
+| D54 | CGU à l'inscription | **Rien avant la tranche 14** (Q20), forme exacte selon le juriste — 2026-10-21 |
+| D55 | Ville du profil | **Champ libre**, format et longueurs maximales vérifiés (longueurs proposées par le `supabase-developer`, validées par le porteur du projet) — 2026-10-21 |
+| D56 | Contournement de D24 | **Remplacé par D59 (2026-10-22)**. Ancien texte : accepté au MVP comme **limite connue** : un appel direct à Supabase Auth échappe au compteur `login_attempts` ; limites par IP de Supabase réglées ; à confirmer par le `security-reviewer` — 2026-10-21 |
+| D57 | Lien `?ref=` | Seulement **conservé dans la redirection** `/signup` → `/login` ; cookie et rattachement en tranche 13 — 2026-10-21 |
+| D58 | Navigation | Onglets proposés montés en tranche 2 ; « Créer » mène à une **page provisoire** jusqu'à la tranche 3 ; validés sur vrai téléphone — 2026-10-21 |
+| D59 | Fabrication du code de connexion | **Convivia fabrique et vérifie le code** (§ 7.2) : Supabase Auth ne sert qu'à ouvrir la session, n'envoie jamais d'e-mail (Send Email Hook Postgres qui refuse tout, aucun SMTP) ; hook de jeton : organisateur `otp` seul, admin `password` / `totp` seuls ; inscriptions publiques fermées. Remplace D56 (après 3 audits) — 2026-10-22 |
+| D60 | Limites anti-abus de la connexion | Par IP /64 : 10 demandes / 10 min et 30 / 24 h, 20 vérifications / 10 min et 60 / 24 h ; par IPv6 /48 : 60 / 10 min et 200 / 24 h, 120 / 10 min et 400 / 24 h ; **plafond global 300 codes / heure** avec alerte ; variantes `+tag` et points Gmail comptées comme **une seule adresse** pour les quotas ; « Confirm email » **désactivé** ; jetons d'accès 1 h — 2026-10-22 |
+| D61 | Limites acceptées (connexion) | Énumération des comptes par appel direct à Supabase (`/otp`, `/recover`) ; blocage volontaire d'une adresse (5 codes faux, 3 codes / h) ; anti-robot Turnstile reporté en **tranche 16** (aussi dans Supabase Auth) ; purge des comptes jamais utilisés en tranche 14 — 2026-10-22 |
+| D62 | Vérification du numéro (tranche 5) | **Convivia vérifie le numéro** comme l'e-mail (code fabriqué et vérifié par Convivia, envoyé par WhatsApp) ; on ne se fie jamais à `auth.users.phone_confirmed_at` ; confirmations de numéro Supabase activées (pas de confirmation automatique) — 2026-10-22 |
 | D42 | « Copier son lien » (invité ayant refusé WhatsApp) | Bouton actif seulement si l'événement est payé ou en essai **et** l'invité dans le plafond. La **1re copie compte comme un envoi** (place occupée, type figé, jetons et QR créés), sans coût WhatsApp ni quota ; recopier ensuite est libre |
 
 ---
@@ -745,6 +761,12 @@ who, idempotency_key)`**, où `who` ∈ `both | main | companion` :
 
 ### 7.1 Par code WhatsApp
 
+> **Remplacé par D47 (2026-10-21)** : la connexion se fait **par e-mail
+> seulement** (§ 7.2). Ce paragraphe ne vaut plus que pour ses règles
+> communes (code, blocage D24 / D52, message neutre D23, exclusion des
+> admins) et, en tranche 5, pour le **code WhatsApp de vérification du
+> numéro** demandé avec l'essai (D48, D49).
+
 - `supabase.auth.signInWithOtp({ phone })`.
 - Supabase n'envoie nativement par WhatsApp que via **Twilio** ✅. Avec D1, on
   utilise le **Send SMS Hook** de Supabase ✅ : Supabase génère le code et
@@ -774,18 +796,35 @@ who, idempotency_key)`**, où `who` ∈ `both | main | companion` :
   n'est pas documenté. Sans conséquence ici, puisque tous les codes partent
   par WhatsApp. À vérifier lors de la première tranche.
 
-### 7.2 Par e-mail (D10)
+### 7.2 Par e-mail (D10, D59)
 
-- `supabase.auth.signInWithOtp({ email })` avec un modèle d'e-mail qui affiche
-  le **code à 6 chiffres** (et non un lien magique). Saisie sur le même écran
-  `/verify`.
-- Envoi par **Resend** configuré comme serveur SMTP de Supabase Auth.
+- **Convivia fabrique et vérifie le code** (D59, 2026-10-22). Demande
+  (`/login`) : le serveur tire un code à 6 chiffres (`crypto.randomInt`),
+  calcule son empreinte HMAC (`LOGIN_CODE_PEPPER`), et appelle
+  `login_code_issue` (limites D52 et D60, cas admin décidé par la base :
+  aucun code stocké, aucun envoi, même réponse). L'e-mail part par **Resend
+  depuis le serveur**, après la réponse (`after()`), avec garde-fou : hors
+  production, seules les adresses de `EMAIL_TEST_ALLOWLIST` reçoivent ; en
+  production, expéditeur sur `convivia.app` seulement.
+- Vérification (`/verify`) : `login_code_verify` (usage unique, 10 min,
+  5 codes faux → 15 min, échec compté même sans compte) ; si le code est
+  juste : `auth.admin.createUser` (compte confirmé), `generateLink` (type
+  `magiclink` contrôlé) puis aussitôt `verifyOtp({ token_hash })` →
+  session (`amr = otp`) → `ensure_organizer`.
+- Supabase n'envoie **aucun** e-mail : Send Email Hook Postgres
+  (`auth_hooks.send_email`) qui refuse tout ; aucun SMTP personnalisé ;
+  `otp_expiry` Supabase à 60 s (le jeton de `generateLink` ne vit que le
+  minimum) ; inscriptions publiques fermées ; Custom Access Token Hook
+  (`auth_hooks.custom_access_token`). Saisie sur `/verify`. Détails :
+  `07-schema-backend.md` § 2.1, guide `docs/setup/tranche-2-auth.md`.
 
-### 7.3 Numéro vérifié et essai (D11)
+### 7.3 Numéro vérifié et essai (D11, D48, D62)
 
-- Un compte e-mail peut ajouter un numéro : `auth.updateUser({ phone })`
-  envoie un code par le même hook, et `phone_confirmed_at` est renseigné
-  après vérification.
+- Le numéro est vérifié **au moment de demander l'essai** (D48, tranche 5),
+  **par Convivia** (D62) : code fabriqué et vérifié par Convivia comme pour
+  l'e-mail, envoyé par WhatsApp. On ne se fie **jamais** à
+  `auth.users.phone_confirmed_at` (un organisateur peut le faire remplir par
+  un appel direct à Supabase).
 - L'option « essai gratuit » n'apparaît que si le numéro est vérifié **et**
   absent de `trial_claims` **et** si l'événement n'a encore aucun paiement
   approuvé (D38).

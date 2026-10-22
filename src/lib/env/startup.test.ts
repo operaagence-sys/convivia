@@ -62,6 +62,11 @@ function productionVars(overrides: Record<string, string> = {}): Record<string, 
     FEDAPAY_SECRET_KEY: fakeKey('live'),
     NEXT_PUBLIC_SITE_URL: 'https://example.test',
     NEXT_PUBLIC_SUPABASE_URL: 'https://example.test',
+    // Formats imposés par le schéma: 32 caractères au moins, préfixe sb_secret_.
+    LOGIN_ATTEMPTS_HASH_SECRET: 'x'.repeat(32),
+    LOGIN_IP_HASH_SECRET: 'y'.repeat(32),
+    LOGIN_CODE_PEPPER: 'z'.repeat(32),
+    SUPABASE_SECRET_KEY: 'sb_secret_fake',
   };
   for (const name of PRODUCTION_REQUIRED_ENV) vars[name] ??= FILLER;
   return { ...vars, ...overrides };

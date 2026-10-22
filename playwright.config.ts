@@ -20,7 +20,15 @@ export default defineConfig({
   },
   projects: [{ name: 'mobile-chrome', use: { ...devices['Pixel 7'] } }],
   webServer: {
-    command: process.env.CI ? `npm run start -- -p ${PORT}` : `npm run dev -- -p ${PORT}`,
+    // `E2E_PROD=1` : sert le build de production deja construit (`npm run build`) avec `next start`.
+    // Tests de connexion SANS vrai Supabase : lancer avec un port local ferme, par exemple
+    //   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54399 (+ cle anonyme factice) au BUILD,
+    //   puis les memes variables (sans les secrets serveur : la demande de code echoue alors
+    //   proprement, ce que les tests verifient) au lancement de `E2E_PROD=1 npm run test:e2e`.
+    command:
+      process.env.CI || process.env.E2E_PROD
+        ? `npm run start -- -p ${PORT}`
+        : `npm run dev -- -p ${PORT}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

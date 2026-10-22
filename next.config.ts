@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import {
+  assertDistinctLoginSecrets,
   assertModeGuards,
   assertNoSecretPublicVariables,
   assertProductionRequiredEnv,
@@ -27,6 +28,8 @@ assertModeGuards({
 assertNoSecretPublicVariables(process.env);
 // Production: variables indispensables presentes au build (Vercel les expose pendant le build).
 assertProductionRequiredEnv(process.env.VERCEL_ENV || undefined, process.env);
+// Les trois secrets de connexion doivent être différents (sans afficher de valeur).
+assertDistinctLoginSecrets(process.env);
 
 const isDev = process.env.NODE_ENV !== 'production';
 

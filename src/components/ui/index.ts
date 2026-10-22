@@ -1,5 +1,6 @@
 export { cn } from './cn';
 export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from './button';
+export { ButtonLink } from './button-link';
 export { Spinner } from './spinner';
 export { Card, type CardTone } from './card';
 export { Badge, type BadgeTone } from './badge';
@@ -17,6 +18,7 @@ export { OtpField, type OtpStatus } from './otp-field';
 export { Switch } from './switch';
 export { Tabs, SegmentedControl, type TabItem } from './tabs';
 export { Modal } from './modal';
+export { InlineAlert, type InlineAlertTone } from './inline-alert';
 export { Toast, ToastProvider, useToast, type ToastTone } from './toast';
 export { DataTable, type DataTableColumn, type SortDirection } from './data-table';
 export { Pagination } from './pagination';

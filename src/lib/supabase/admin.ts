@@ -1,7 +1,7 @@
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 import { requireServerEnv } from '@/lib/env/server';
-import type { Database } from '@/types/database';
+import type { Database } from '@/types/database-overrides';
 
 /**
  * Client service_role: contourne la RLS. SERVEUR UNIQUEMENT (`server-only`): ne jamais
